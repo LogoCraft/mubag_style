@@ -181,8 +181,8 @@
         <div class="hidden md:flex space-x-8 text-lg font-medium">
             <a href="#" class="text-blue-800 hover:text-violet-500 transition-colors duration-300">Ana Səhifə</a>
             <a href="#products" class="text-blue-800 hover:text-violet-500 transition-colors duration-300">Kolleksiya</a>
-            <a href="#" class="text-blue-800 hover:text-violet-500 transition-colors duration-300">Haqqımızda</a>
-            <a href="#" class="text-blue-800 hover:text-violet-500 transition-colors duration-300">Əlaqə</a>
+            <a href="#about-us" class="text-blue-800 hover:text-violet-500 transition-colors duration-300">Haqqımızda</a>
+            <a href="#contact-us" class="text-blue-800 hover:text-violet-500 transition-colors duration-300">Əlaqə</a>
         </div>
         <div class="flex items-center space-x-4">
             <button id="cart-button" class="text-violet-500 relative focus:outline-none">
@@ -199,8 +199,8 @@
     <div id="mobile-menu" class="hidden md:hidden bg-white text-center border-b border-gray-200">
         <a href="#" class="block py-4 text-blue-800 hover:bg-gray-100 transition-colors duration-300">Ana Səhifə</a>
         <a href="#products" class="block py-4 text-blue-800 hover:bg-gray-100 transition-colors duration-300">Kolleksiya</a>
-        <a href="#" class="block py-4 text-blue-800 hover:bg-gray-100 transition-colors duration-300">Haqqımızda</a>
-        <a href="#" class="block py-4 text-blue-800 hover:bg-gray-100 transition-colors duration-300">Əlaqə</a>
+        <a href="#about-us" class="block py-4 text-blue-800 hover:bg-gray-100 transition-colors duration-300">Haqqımızda</a>
+        <a href="#contact-us" class="block py-4 text-blue-800 hover:bg-gray-100 transition-colors duration-300">Əlaqə</a>
     </div>
 
     <!-- Hero section -->
@@ -322,6 +322,38 @@
                 <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     <!-- Product cards will be dynamically filled here by JavaScript -->
                     <p id="no-products-message" class="no-products-message hidden">Hələ heç bir məhsul əlavə edilməyib.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Haqqımızda Bölməsi -->
+    <section id="about-us" class="py-16 md:py-24 bg-white">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-4xl md:text-5xl font-bold text-violet-500 mb-6">Haqqımızda</h2>
+            <p class="text-lg text-gray-700 max-w-4xl mx-auto leading-relaxed">
+                Mubag Style olaraq, zərifliyi və stili gündəlik həyatınıza daxil etmək üçün yola çıxdıq. Hər bir çantamız, yüksək keyfiyyətli materiallardan və peşəkar sənətkarlıqla hazırlanıb. Bizim üçün çanta sadəcə bir aksesuar deyil, sizin fərdi tərzinizin bir hissəsidir. Kolleksiyalarımızla hər zövqə və ehtiyaca uyğun zəriflik təqdim edirik.
+            </p>
+        </div>
+    </section>
+
+    <!-- Əlaqə Bölməsi -->
+    <section id="contact-us" class="py-16 md:py-24 bg-[#f7f3e9]">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-4xl md:text-5xl font-bold text-violet-500 mb-6">Əlaqə</h2>
+            <div class="max-w-xl mx-auto space-y-8 text-gray-700">
+                <div class="flex items-center justify-center space-x-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <p class="text-lg">Bakı, Azərbaycan</p>
+                </div>
+                <div class="flex items-center justify-center space-x-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.26 1.13a11.056 11.056 0 005.418 5.418l1.13-2.26a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    <p class="text-lg">+994 50 449 56 77</p>
                 </div>
             </div>
         </div>
