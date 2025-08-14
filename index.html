@@ -275,28 +275,25 @@
             transition: all 0.2s ease-in-out;
             @apply bg-gray-200 text-gray-800 py-2 px-4 rounded-full font-medium hover:bg-green-500 hover:text-white;
         }
-
-        /* Taymer stili */
-        .countdown-timer-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #ef4444; /* Qırmızı fon */
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 0.75rem;
-            margin-top: 1rem;
-            font-weight: bold;
-            font-size: 1.5rem;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        
+        /* Şəkil yüklənərkən göstəriləcək loader stili */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 4px solid #8b5cf6;
+            width: 40px;
+            height: 40px;
+            -webkit-animation: spin 1s linear infinite;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
         }
-        .countdown-timer-container .time-unit {
-            font-size: 2rem;
-            margin: 0 0.5rem;
+        @-webkit-keyframes spin {
+            0% { -webkit-transform: rotate(0deg); }
+            100% { -webkit-transform: rotate(360deg); }
         }
-        .countdown-timer-container .label {
-            font-size: 0.8rem;
-            text-transform: uppercase;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -351,7 +348,7 @@
             <!-- Yeni günlük ziyaretçi sayacı bölümü -->
             <div id="daily-visitor-info" class="bg-violet-500 p-6 rounded-xl shadow-md text-white text-center">
                 <h3 class="text-2xl font-bold mb-2">Bugünkü Ziyarətçi Sayı:</h3>
-                <span id="daily-visitor-count" class="text-4xl font-extrabold tracking-wide">...</span>
+                <span id="daily-visitor-count" class="text-4xl font-extrabold tracking-wide">0</span>
             </div>
 
             <div class="bg-white p-8 rounded-2xl shadow-xl max-w-2xl mx-auto w-full text-center upload-container">
@@ -393,7 +390,7 @@
                         <p id="no-preview-text" class="text-gray-500 italic flex items-center justify-center w-full">Şəkillər burda görünəcək.</p>
                     </div>
                     
-                    <button type="submit" class="w-full bg-violet-500 text-white font-bold py-3 px-6 rounded-full hover:bg-violet-600 transition duration-300 ease-in-out transform hover:scale-105">
+                    <button type="submit" id="submit-product-btn" class="w-full bg-violet-500 text-white font-bold py-3 px-6 rounded-full hover:bg-violet-600 transition duration-300 ease-in-out transform hover:scale-105">
                         Məhsulu Yüklə
                     </button>
                 </form>
@@ -553,28 +550,19 @@
                         <p id="modal-description" class="text-gray-700 mb-6"></p>
                         <div class="flex flex-col md:flex-row md:items-center justify-between mb-4">
                             <span id="modal-price" class="text-3xl font-bold text-violet-500"></span>
-                            <!-- Yeni Endirim Taymeri Bölməsi -->
-                            <div id="countdown-timer-display" class="hidden countdown-timer-container mt-4 md:mt-0">
-                                <span class="text-xl">Endirim bitməsinə:</span>
-                                <div class="flex items-center ml-4">
-                                    <span id="timer-minutes" class="time-unit">00</span>
-                                    <span class="text-2xl mx-1">:</span>
-                                    <span id="timer-seconds" class="time-unit">00</span>
-                                </div>
-                            </div>
                         </div>
                         
                         <!-- Yeni Endirim Bölməsi, yalnız gizli rejimdə görünür -->
                         <div id="product-discount-section" class="hidden mt-8 p-4 bg-gray-100 rounded-lg border border-gray-200">
-                             <h4 class="text-lg font-semibold text-gray-700 mb-4">Endirim Tətbiq Et</h4>
-                             <div class="flex flex-wrap gap-2">
-                                <button class="discount-option-btn-product" data-discount="10">10%</button>
-                                <button class="discount-option-btn-product" data-discount="20">20%</button>
-                                <button class="discount-option-btn-product" data-discount="30">30%</button>
-                                <button class="discount-option-btn-product" data-discount="50">50%</button>
-                                <button class="discount-option-btn-product" data-discount="70">70%</button>
-                                <button class="discount-option-btn-product bg-red-500 text-white" data-discount="0">Sıfırla</button>
-                             </div>
+                               <h4 class="text-lg font-semibold text-gray-700 mb-4">Endirim Tətbiq Et</h4>
+                               <div class="flex flex-wrap gap-2">
+                                   <button class="discount-option-btn-product" data-discount="10">10%</button>
+                                   <button class="discount-option-btn-product" data-discount="20">20%</button>
+                                   <button class="discount-option-btn-product" data-discount="30">30%</button>
+                                   <button class="discount-option-btn-product" data-discount="50">50%</button>
+                                   <button class="discount-option-btn-product" data-discount="70">70%</button>
+                                   <button class="discount-option-btn-product bg-red-500 text-white" data-discount="0">Sıfırla</button>
+                               </div>
                         </div>
 
                         <div class="mt-8 flex flex-col sm:flex-row gap-4">
@@ -613,829 +601,568 @@
             <p id="confirmation-text" class="text-lg mb-6 font-semibold"></p>
             <div class="flex justify-around space-x-4">
                 <button id="confirm-yes-button" class="bg-red-500 text-white py-3 px-8 rounded-full font-medium hover:bg-red-600 transition-colors duration-300">Bəli, sil</button>
-                <button id="confirm-no-button" class="bg-gray-400 text-white py-3 px-8 rounded-full font-medium hover:bg-gray-500 transition-colors duration-300">Ləğv et</button>
+                <button id="confirm-no-button" class="bg-gray-400 text-white py-3 px-8 rounded-full font-medium hover:bg-gray-500 transition-colors duration-300">Xeyr</button>
             </div>
         </div>
     </div>
 
     <script type="module">
+        // Firebase-dən lazımlı funksiyaları import edirik
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // DOM elementlərinə müraciət
-            const mobileMenuButton = document.getElementById('mobile-menu-button');
-            const mobileMenu = document.getElementById('mobile-menu');
-            const cartButton = document.getElementById('cart-button');
-            const cartSidebar = document.getElementById('cart-sidebar');
-            const closeCartButton = document.getElementById('close-cart-button');
-            const cartOverlay = document.getElementById('cart-overlay');
-            const productList = document.getElementById('product-list');
-            const filterButtonsContainer = document.getElementById('filter-buttons-container');
-            const cartItemsContainer = document.getElementById('cart-items');
-            const cartTotalSpan = document.getElementById('cart-total');
-            const cartCountSpan = document.getElementById('cart-count');
-            const checkoutButton = document.getElementById('checkout-button');
-            const emptyCartMessage = document.getElementById('empty-cart-message');
-            const productDetailModalOverlay = document.getElementById('product-detail-modal-overlay');
-            const productDetailModal = document.getElementById('product-detail-modal');
-            const closeDetailButton = document.getElementById('close-detail-button');
-            
-            // Modal içindəki qalereya elementləri
-            const modalMainImage = document.getElementById('modal-main-image');
-            const thumbnailContainer = document.getElementById('thumbnail-container');
-            const prevBtn = document.getElementById('prev-btn');
-            const nextBtn = document.getElementById('next-btn');
+        // İstifadəçinin təqdim etdiyi Firebase konfiqurasiyası
+        const firebaseConfig = {
+          apiKey: "AIzaSyDnvDt4pB6fK88soJHyCMsig8F7UBoWSPM",
+          authDomain: "mubag-style.firebaseapp.com",
+          projectId: "mubag-style",
+          storageBucket: "mubag-style.firebasestorage.app",
+          messagingSenderId: "1093484952570",
+          appId: "1:1093484952570:web:b7ecbb9c3c2c791839c243",
+          measurementId: "G-YCBMK65DKN"
+        };
+        
+        // Canvas mühiti üçün xüsusi dəyişənləri istifadə edirik
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-            const modalName = document.getElementById('modal-name');
-            const modalDescription = document.getElementById('modal-description');
-            const modalPrice = document.getElementById('modal-price');
-            const modalAddToCartBtn = document.getElementById('modal-add-to-cart-btn');
-            const modalDeleteBtn = document.getElementById('modal-delete-btn'); 
-            const messageBoxOverlay = document.getElementById('message-box-overlay');
-            const messageBoxText = document.getElementById('message-box-text');
-            const messageBoxCloseButton = document.getElementById('message-box-close-button');
-            const noProductsMessage = document.getElementById('no-products-message');
-            const privateAccessLink = document.getElementById('private-access-link');
-            const passwordModalOverlay = document.getElementById('password-modal-overlay');
-            const passwordInput = document.getElementById('password-input');
-            const submitPasswordBtn = document.getElementById('submit-password-btn');
-            const passwordError = document.getElementById('password-error');
-            const secretContent = document.getElementById('secret-content');
-            
-            // Çoxsaylı şəkil yükləmə elementləri
-            const fileInput = document.getElementById('fileInput');
-            const previewContainer = document.getElementById('preview-container');
-            const noPreviewText = document.getElementById('no-preview-text');
+        // Firebase-i başladırıq
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-            const uploadForm = document.getElementById('product-upload-form');
-            const productNameInput = document.getElementById('product-name');
-            const productDescriptionInput = document.getElementById('product-description');
-            const productPriceInput = document.getElementById('product-price');
-            const productCategorySelect = document.getElementById('product-category');
-            const clearProductsButton = document.getElementById('clear-products-btn');
-            const confirmationModalOverlay = document.getElementById('confirmation-modal-overlay');
-            const confirmationText = document.getElementById('confirmation-text');
-            const confirmYesButton = document.getElementById('confirm-yes-button');
-            const confirmNoButton = document.getElementById('confirm-no-button');
+        // === Məhsul məlumatları ===
+        // İstifadəçinin istəyi ilə bütün ilkin məhsullar silindi.
+        // İndi idarəetmə panelindən istifadə edərək öz məhsullarınızı əlavə edə bilərsiniz.
+        let products = [];
 
-            // Endirim Modalı elementləri
-            const productDiscountSection = document.getElementById('product-discount-section');
-            const productDiscountButtons = productDiscountSection.querySelectorAll('.discount-option-btn-product');
+        // === Ümumi dəyişənlər ===
+        let cart = [];
+        let secretModeEnabled = false;
+        let currentModalProduct = null;
+        let confirmationCallback = null;
 
-            // Yeni günlük ziyaretçi sayacı elementi
-            const dailyVisitorCountSpan = document.getElementById('daily-visitor-count');
-            const dailyVisitorInfoDiv = document.getElementById('daily-visitor-info');
-            
-            // Yeni Taymer elementləri
-            const countdownTimerDisplay = document.getElementById('countdown-timer-display');
-            const timerMinutes = document.getElementById('timer-minutes');
-            const timerSeconds = document.getElementById('timer-seconds');
-            let countdownInterval = null;
+        // === DOM Elementləri ===
+        const cartButton = document.getElementById('cart-button');
+        const cartOverlay = document.getElementById('cart-overlay');
+        const cartSidebar = document.getElementById('cart-sidebar');
+        const closeCartButton = document.getElementById('close-cart-button');
+        const cartItemsContainer = document.getElementById('cart-items');
+        const cartCountSpan = document.getElementById('cart-count');
+        const cartTotalSpan = document.getElementById('cart-total');
+        const emptyCartMessage = document.getElementById('empty-cart-message');
+        const checkoutButton = document.getElementById('checkout-button');
 
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
 
-            // Global dəyişənlər
-            let cart = new Map();
-            const correctPassword = "1975"; // Gizli şifrə
-            let products = [];
-            let secretMode = false; // Gizli idarəetmə rejiminin vəziyyəti
-            let currentImageIndex = 0;
-            let currentProductImages = [];
-            let currentProductIdForDiscount = null; // Cari endirim üçün seçilmiş məhsulun ID-si
-            let dailyVisitorCounterRef = null; // Günlük ziyaretçi sayacı dinləyicisi üçün
+        const productListContainer = document.getElementById('product-list');
+        const noProductsMessage = document.getElementById('no-products-message');
+        const filterButtonsContainer = document.getElementById('filter-buttons-container');
 
-            // === FIREBASE İNİTİLİZAİSYA VƏ GÜNLÜK ZİYARƏTÇİ SAYACI ===
-            let app, db, auth;
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            const firebaseConfig = JSON.parse(__firebase_config);
-            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        const productDetailModalOverlay = document.getElementById('product-detail-modal-overlay');
+        const productDetailModal = document.getElementById('product-detail-modal');
+        const closeDetailButton = document.getElementById('close-detail-button');
+        const modalName = document.getElementById('modal-name');
+        const modalDescription = document.getElementById('modal-description');
+        const modalPrice = document.getElementById('modal-price');
+        const modalMainImage = document.getElementById('modal-main-image');
+        const thumbnailContainer = document.getElementById('thumbnail-container');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const modalAddToCartBtn = document.getElementById('modal-add-to-cart-btn');
+        const modalDeleteBtn = document.getElementById('modal-delete-btn');
+        const productDiscountSection = document.getElementById('product-discount-section');
+        
+        const passwordModalOverlay = document.getElementById('password-modal-overlay');
+        const passwordInput = document.getElementById('password-input');
+        const submitPasswordBtn = document.getElementById('submit-password-btn');
+        const passwordError = document.getElementById('password-error');
+        const privateAccessLink = document.getElementById('private-access-link');
+        const secretContent = document.getElementById('secret-content');
+        
+        const productUploadForm = document.getElementById('product-upload-form');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('preview-container');
+        const noPreviewText = document.getElementById('no-preview-text');
+        const dailyVisitorCountSpan = document.getElementById('daily-visitor-count');
+        const clearProductsBtn = document.getElementById('clear-products-btn');
+        const submitProductBtn = document.getElementById('submit-product-btn');
 
-            async function initFirebase() {
-                try {
-                    app = initializeApp(firebaseConfig);
-                    db = getFirestore(app);
-                    auth = getAuth(app);
-                    
-                    if (initialAuthToken) {
-                        await signInWithCustomToken(auth, initialAuthToken);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                    console.log("Firebase ugurla basladildi.");
-                } catch (error) {
-                    console.error("Firebase ugursuz basladildi:", error);
-                }
-            }
-
-            async function setupDailyVisitorCounter() {
-                try {
-                    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-                    const visitorCounterPath = `artifacts/${appId}/public/data/daily_visitors/${today}`;
-                    const visitorCounterDocRef = doc(db, visitorCounterPath);
-
-                    const visitorCountDoc = await getDoc(visitorCounterDocRef);
-
-                    if (visitorCountDoc.exists()) {
-                        await updateDoc(visitorCounterDocRef, {
-                            count: increment(1)
-                        });
-                    } else {
-                        await setDoc(visitorCounterDocRef, {
-                            count: 1
-                        });
-                    }
-                    
-                    if (dailyVisitorCounterRef) {
-                        dailyVisitorCounterRef(); // Önceki dinleyiciyi durdur
-                    }
-                    dailyVisitorCounterRef = onSnapshot(visitorCounterDocRef, (doc) => {
-                        if (doc.exists()) {
-                            const count = doc.data().count;
-                            dailyVisitorCountSpan.textContent = count;
-                        } else {
-                            dailyVisitorCountSpan.textContent = '0';
-                        }
-                    });
-
-                } catch (error) {
-                    console.error("Günlük ziyaretçi sayacı başlatılırken bir hata oluştu:", error);
-                    dailyVisitorCountSpan.textContent = "Hata!";
-                }
-            }
-            
-            async function logPageVisit() {
-                try {
-                    const today = new Date().toISOString().slice(0, 10);
-                    const visitorCounterDocRef = doc(db, `artifacts/${appId}/public/data/daily_visitors/${today}`);
-
-                    const visitorCountDoc = await getDoc(visitorCounterDocRef);
-                    if (visitorCountDoc.exists()) {
-                        await updateDoc(visitorCounterDocRef, {
-                            count: increment(1)
-                        });
-                    } else {
-                        await setDoc(visitorCounterDocRef, {
-                            count: 1
-                        });
-                    }
-                } catch (error) {
-                    console.error("Ziyaretçi girişi kaydedilirken bir hata oluştu:", error);
-                }
-            }
-
-            // === FIREBASE İNİTİLİZAİSYA VƏ GÜNLÜK ZİYARƏTÇİ SAYACI BİTİŞ ===
+        const messageBoxOverlay = document.getElementById('message-box-overlay');
+        const messageBoxText = document.getElementById('message-box-text');
+        const messageBoxCloseButton = document.getElementById('message-box-close-button');
+        
+        const confirmationModalOverlay = document.getElementById('confirmation-modal-overlay');
+        const confirmationText = document.getElementById('confirmation-text');
+        const confirmYesButton = document.getElementById('confirm-yes-button');
+        const confirmNoButton = document.getElementById('confirm-no-button');
 
 
-            // Məhsulları Local Storage-dan yükləyir
-            function loadProducts() {
-                const storedProducts = localStorage.getItem('mubagProducts');
-                if (storedProducts) {
-                    products = JSON.parse(storedProducts);
-                } else {
-                    products = [];
-                }
-                // Hər yükləmədə endirim müddətini yoxla
-                checkDiscountExpiry();
-            }
+        // === Funksiyalar ===
 
-            // Məhsulları Local Storage-a yadda saxlayır
-            function saveProducts() {
-                localStorage.setItem('mubagProducts', JSON.stringify(products));
-            }
+        /**
+         * Xüsusi mesaj qutusunu göstərir.
+         * @param {string} message Görüntülənəcək mətn.
+         */
+        function showMessageBox(message) {
+            messageBoxText.textContent = message;
+            messageBoxOverlay.style.display = 'flex';
+        }
 
-            // Məhsul kartlarını dinamik şəkildə yaradır
-            function renderProducts(filteredProducts = products) {
-                productList.innerHTML = '';
-                if (filteredProducts.length === 0) {
-                    noProductsMessage.classList.remove('hidden');
-                } else {
-                    noProductsMessage.classList.add('hidden');
-                    filteredProducts.forEach(product => {
-                        const productCard = document.createElement('div');
-                        productCard.className = `product-card bg-white rounded-xl overflow-hidden shadow-lg border border-gray-200`;
-                        
-                        const categoryString = product.categories.join(' ');
-                        productCard.dataset.id = product.id;
-                        productCard.dataset.category = categoryString;
-                        // Məhsul kartı üçün ilk şəkili istifadə edirik
-                        productCard.dataset.image = product.images[0]; 
-                        productCard.dataset.name = product.name;
-                        productCard.dataset.price = product.price;
-                        productCard.dataset.originalPrice = product.originalPrice;
-                        productCard.dataset.description = product.description;
-                        productCard.dataset.images = JSON.stringify(product.images);
-                        productCard.dataset.discountEndTime = product.discountEndTime || null;
+        /**
+         * Təsdiq modalını göstərir.
+         * @param {string} message Görüntülənəcək mətn.
+         * @param {Function} onConfirm Təsdiq edildikdə işə düşəcək funksiya.
+         */
+        function showConfirmationModal(message, onConfirm) {
+            confirmationText.textContent = message;
+            confirmationCallback = onConfirm;
+            confirmationModalOverlay.style.display = 'flex';
+        }
 
-                        const isDiscounted = product.price < product.originalPrice;
-                        const discountPercentage = isDiscounted ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
-                        
-                        productCard.innerHTML = `
-                            ${isDiscounted ? `<span class="discount-badge">-${discountPercentage}%</span>` : ''}
-                            <img src="${product.images[0]}" alt="${product.name}" class="w-full h-64 object-cover">
-                            <div class="p-6">
-                                <h3 class="text-xl font-semibold text-blue-800 mb-2">${product.name}</h3>
-                                <p class="text-gray-600 mb-4">${product.description.substring(0, 50)}...</p>
-                                <div class="flex justify-between items-center">
-                                    <div>
-                                        ${isDiscounted ? `<span class="original-price">${product.originalPrice.toFixed(2)} AZN</span>` : ''}
-                                        <span class="text-2xl font-bold text-violet-500">${product.price.toFixed(2)} AZN</span>
-                                    </div>
-                                    <button class="add-to-cart-btn bg-violet-500 text-white py-2 px-6 rounded-full font-medium hover:bg-violet-600 transition-colors duration-300"
-                                            data-id="${product.id}"
-                                            data-name="${product.name}"
-                                            data-price="${product.price}"
-                                            data-image="${product.images[0]}">
-                                        Səbətə At
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                        productList.appendChild(productCard);
-                    });
-                }
-            }
-            
-            function updateFilterButtons() {
-                // Əvvəlki "Sil" və "Endirim" düymələrini təmizlə
-                document.querySelectorAll('.delete-collection-btn, .discount-collection-btn').forEach(btn => btn.remove());
-                
-                // Aktiv düyməyə və gizli rejimə görə "Sil" düymələri əlavə et
-                if (secretMode) {
-                    const filterButtons = document.querySelectorAll('.filter-button');
-                    filterButtons.forEach(button => {
-                        const filter = button.dataset.filter;
-                        const wrapper = document.getElementById(`filter-wrapper-${filter}`);
-                        
-                        if (button.classList.contains('active') && filter !== 'all') {
-                            // Sil düyməsi
-                            const deleteBtn = document.createElement('button');
-                            deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Sil';
-                            deleteBtn.className = 'delete-collection-btn text-white bg-red-500 p-2 rounded-full hover:bg-red-600 transition-colors duration-300 mt-2';
-                            deleteBtn.dataset.filter = filter;
-                            wrapper.appendChild(deleteBtn);
-                        }
-                    });
-                }
-            }
+        /**
+         * Təsdiq modalını gizlədir.
+         */
+        function hideConfirmationModal() {
+            confirmationModalOverlay.style.display = 'none';
+        }
 
-            // Səbət sidebar-ı açır
-            function openCart() {
-                cartSidebar.classList.add('open');
-                cartOverlay.style.display = 'block';
-            }
+        /**
+         * Bütün məhsulları ekranda göstərir.
+         * @param {Array} productArray Göstəriləcək məhsulların massivi.
+         */
+        function renderProducts(productArray) {
+            productListContainer.innerHTML = ''; // Köhnə məhsulları silirik
+            if (productArray.length === 0) {
+                noProductsMessage.classList.remove('hidden');
+            } else {
+                noProductsMessage.classList.add('hidden');
+                productArray.forEach(product => {
+                    const productCard = document.createElement('div');
+                    productCard.classList.add('product-card', 'bg-white', 'rounded-xl', 'shadow-lg', 'p-6');
+                    productCard.dataset.id = product.id;
 
-            // Səbət sidebar-ı bağlayır
-            function closeCart() {
-                cartSidebar.classList.remove('open');
-                cartOverlay.style.display = 'none';
-            }
+                    const priceHtml = product.isDiscounted ?
+                        `<p class="text-violet-500 font-bold text-xl">${(product.price).toFixed(2)} AZN</p>
+                        <p class="original-price">${(product.originalPrice).toFixed(2)} AZN</p>` :
+                        `<p class="text-violet-500 font-bold text-xl">${(product.price).toFixed(2)} AZN</p>`;
 
-            // Şəkil qalereyasını yeniləyir
-            function updateGallery() {
-                modalMainImage.src = currentProductImages[currentImageIndex];
-
-                thumbnailContainer.innerHTML = '';
-                currentProductImages.forEach((image, index) => {
-                    const thumbnail = document.createElement('img');
-                    thumbnail.src = image;
-                    thumbnail.alt = `Thumbnail ${index + 1}`;
-                    thumbnail.className = `thumbnail ${index === currentImageIndex ? 'active' : ''}`;
-                    thumbnail.addEventListener('click', () => {
-                        currentImageIndex = index;
-                        updateGallery();
-                    });
-                    thumbnailContainer.appendChild(thumbnail);
+                    productCard.innerHTML = `
+                        <div class="relative w-full h-64 mb-4 rounded-xl overflow-hidden">
+                            <img src="${product.images[0]}" alt="${product.name}" class="w-full h-full object-cover">
+                            ${product.isDiscounted ? `<span class="discount-badge">-${product.discount}%</span>` : ''}
+                        </div>
+                        <h4 class="text-xl font-bold mb-2">${product.name}</h4>
+                        <div class="flex items-center">
+                            ${priceHtml}
+                        </div>
+                    `;
+                    productListContainer.appendChild(productCard);
                 });
             }
+        }
 
-            // Məhsul detalları modalını açır
-            function openProductDetailModal(productData) {
-                // Şəkilləri global dəyişkənə yadda saxlayırıq
-                currentProductImages = productData.images;
-                currentImageIndex = 0;
-                updateGallery(); // Qalereyanı ilk şəkil ilə yeniləyirik
-                currentProductIdForDiscount = productData.id;
+        /**
+         * Məhsul detalları modalını göstərir.
+         * @param {object} product Görüntülənəcək məhsul obyekti.
+         */
+        function showProductDetail(product) {
+            currentModalProduct = product; // Cari məhsulu dəyişəndə saxlayırıq
+            modalName.textContent = product.name;
+            modalDescription.textContent = product.description;
+            modalMainImage.src = product.images[0];
+            modalMainImage.alt = product.name;
 
-                modalName.textContent = productData.name;
-                modalDescription.textContent = productData.description;
-                
-                const isDiscounted = productData.price < productData.originalPrice;
-                if (isDiscounted) {
-                     modalPrice.innerHTML = `<span class="original-price">${productData.originalPrice.toFixed(2)} AZN</span> ${productData.price.toFixed(2)} AZN`;
-                     countdownTimerDisplay.classList.remove('hidden');
-                     startCountdown(productData.discountEndTime, productData.id); // Taymeri başlat
-                } else {
-                     modalPrice.textContent = `${productData.price.toFixed(2)} AZN`;
-                     countdownTimerDisplay.classList.add('hidden');
-                     stopCountdown(); // Taymeri dayandır
+            // Qiyməti formatlayırıq
+            if (product.isDiscounted) {
+                modalPrice.innerHTML = `<span class="text-3xl font-bold text-violet-500">${(product.price).toFixed(2)} AZN</span>
+                                        <span class="original-price">${(product.originalPrice).toFixed(2)} AZN</span>`;
+            } else {
+                modalPrice.innerHTML = `<span class="text-3xl font-bold text-violet-500">${(product.price).toFixed(2)} AZN</span>`;
+            }
+
+            // Şəkil qalereyasını yaradırıq
+            thumbnailContainer.innerHTML = '';
+            product.images.forEach((imgSrc, index) => {
+                const thumbnailImg = document.createElement('img');
+                thumbnailImg.src = imgSrc;
+                thumbnailImg.alt = `Thumbnail ${index + 1}`;
+                thumbnailImg.classList.add('thumbnail', 'shadow-md');
+                if (index === 0) {
+                    thumbnailImg.classList.add('active');
                 }
-
-                modalAddToCartBtn.dataset.id = productData.id;
-                modalAddToCartBtn.dataset.name = productData.name;
-                modalAddToCartBtn.dataset.price = productData.price;
-                modalAddToCartBtn.dataset.image = productData.images[0]; // Səbət üçün birinci şəkili istifadə edirik
-
-                // Gizli rejimdə silmə və endirim bölməsini göstərir, əks halda gizlədir
-                if (secretMode) {
-                    modalDeleteBtn.classList.remove('hidden');
-                    modalDeleteBtn.dataset.id = productData.id;
-                    modalDeleteBtn.dataset.name = productData.name;
-                    productDiscountSection.classList.remove('hidden');
-                } else {
-                    modalDeleteBtn.classList.add('hidden');
-                    productDiscountSection.classList.add('hidden');
-                }
-
-                // Navbar düymələrini göstər
-                if (currentProductImages.length > 1) {
-                    prevBtn.style.display = 'block';
-                    nextBtn.style.display = 'block';
-                } else {
-                    prevBtn.style.display = 'none';
-                    nextBtn.style.display = 'none';
-                }
-
-                productDetailModalOverlay.style.display = 'flex';
-                productDetailModal.classList.add('open');
-            }
-
-            // Məhsul detalları modalını bağlayır
-            function closeProductDetailModal() {
-                productDetailModalOverlay.style.display = 'none';
-                stopCountdown(); // Modalı bağlayanda taymeri dayandır
-            }
-
-            // Məlumat mesaj qutusunu göstərir
-            function showMessageBox(message) {
-                messageBoxText.textContent = message;
-                messageBoxOverlay.style.display = 'flex';
-            }
-
-            // Məlumat mesaj qutusunu bağlayır
-            function closeMessageBox() {
-                messageBoxOverlay.style.display = 'none';
-            }
-
-            // Təsdiq modalını göstərir
-            function showConfirmation(message, onConfirm) {
-                confirmationText.textContent = message;
-                confirmationModalOverlay.style.display = 'flex';
-
-                confirmYesButton.onclick = () => {
-                    onConfirm();
-                    confirmationModalOverlay.style.display = 'none';
-                };
-                
-                confirmNoButton.onclick = () => {
-                    confirmationModalOverlay.style.display = 'none';
-                };
-            }
-
-            // Səbətin görünüşünü yeniləyir
-            function updateCartDisplay() {
-                let total = 0;
-                let itemCount = 0;
-                cartItemsContainer.innerHTML = '';
-
-                if (cart.size === 0) {
-                    emptyCartMessage.style.display = 'block';
-                    checkoutButton.disabled = true;
-                } else {
-                    emptyCartMessage.style.display = 'none';
-                    checkoutButton.disabled = false;
-                    
-                    cart.forEach((item) => {
-                        const cartItemElement = document.createElement('div');
-                        cartItemElement.className = 'flex items-center justify-between py-4 border-b border-gray-100';
-                        cartItemElement.innerHTML = `
-                            <div class="flex items-center">
-                                <img src="${item.image}" alt="${item.name}" class="w-16 h-16 rounded-md object-cover mr-4">
-                                <div>
-                                    <h4 class="font-semibold text-blue-800">${item.name}</h4>
-                                    <p class="text-gray-500">${item.price.toFixed(2)} AZN</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center">
-                                <button class="remove-item text-gray-500 hover:text-red-500 transition-colors duration-300" data-name="${item.name}">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        `;
-                        cartItemsContainer.appendChild(cartItemElement);
-                        total += parseFloat(item.price);
-                        itemCount++;
-                    });
-                }
-                
-                cartTotalSpan.textContent = `${total.toFixed(2)} AZN`;
-                cartCountSpan.textContent = itemCount;
-            }
-
-            // Səbətə məhsul əlavə edir
-            function addToCart(productName, productPrice, productImage) {
-                if (cart.has(productName)) {
-                    showMessageBox(`"${productName}" artıq səbətdədir.`);
-                } else {
-                    const newItem = {
-                        name: productName,
-                        price: productPrice,
-                        image: productImage
-                    };
-                    cart.set(productName, newItem);
-                    updateCartDisplay();
-                    showMessageBox(`"${productName}" məhsulu səbətə əlavə olundu.`);
-                }
-            }
-
-            // Səbətdən məhsul silir
-            function removeFromCart(productName) {
-                cart.delete(productName);
-                updateCartDisplay();
-                showMessageBox(`"${productName}" səbətdən silindi.`);
-            }
-            
-            // Fərdi məhsula endirim tətbiq edən funksiya
-            function applyProductDiscount(productId, discountPercentage) {
-                 const product = products.find(p => p.id === productId);
-                 if (product) {
-                    if (discountPercentage === 0) {
-                        product.price = product.originalPrice;
-                        product.discountEndTime = null; // Taymeri sıfırla
-                        showMessageBox(`${product.name} məhsulundakı endirim sıfırlandı.`);
-                    } else {
-                        const originalPrice = product.originalPrice || product.price;
-                        product.price = originalPrice - (originalPrice * (discountPercentage / 100));
-                        product.originalPrice = originalPrice;
-                        // Endirim üçün 2 saat vaxt ver
-                        const endTime = new Date();
-                        endTime.setHours(endTime.getHours() + 2);
-                        product.discountEndTime = endTime.toISOString();
-                        
-                        showMessageBox(`${product.name} məhsuluna %${discountPercentage} endirim tətbiq edildi! Taymer başladı.`);
-                    }
-                    saveProducts();
-                    renderProducts();
-
-                    // Modalın daxilindəki qiyməti yenilə
-                    const isDiscounted = product.price < product.originalPrice;
-                    if (isDiscounted) {
-                        modalPrice.innerHTML = `<span class="original-price">${product.originalPrice.toFixed(2)} AZN</span> ${product.price.toFixed(2)} AZN`;
-                        countdownTimerDisplay.classList.remove('hidden');
-                        startCountdown(product.discountEndTime, product.id);
-                    } else {
-                        modalPrice.textContent = `${product.price.toFixed(2)} AZN`;
-                        countdownTimerDisplay.classList.add('hidden');
-                        stopCountdown();
-                    }
-                 }
-            }
-
-            // Endirim taymerini idarə edən funksiya
-            function startCountdown(endTime, productId) {
-                if (countdownInterval) {
-                    clearInterval(countdownInterval);
-                }
-                
-                const endDate = new Date(endTime).getTime();
-
-                countdownInterval = setInterval(() => {
-                    const now = new Date().getTime();
-                    const distance = endDate - now;
-                    
-                    if (distance < 0) {
-                        clearInterval(countdownInterval);
-                        const product = products.find(p => p.id === productId);
-                        if (product) {
-                            product.price = product.originalPrice;
-                            product.discountEndTime = null;
-                            saveProducts();
-                            renderProducts();
-                        }
-                        
-                        countdownTimerDisplay.classList.add('hidden');
-                        modalPrice.textContent = `${product.originalPrice.toFixed(2)} AZN`;
-                        return;
-                    }
-                    
-                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                    
-                    timerMinutes.textContent = String(minutes).padStart(2, '0');
-                    timerSeconds.textContent = String(seconds).padStart(2, '0');
-                    
-                }, 1000);
-            }
-            
-            // Taymeri dayandirir
-            function stopCountdown() {
-                if (countdownInterval) {
-                    clearInterval(countdownInterval);
-                    countdownInterval = null;
-                }
-            }
-
-            // Yükləmə zamanı bitmiş endirimləri yoxla
-            function checkDiscountExpiry() {
-                const now = new Date().getTime();
-                products = products.map(product => {
-                    if (product.discountEndTime) {
-                        const endTime = new Date(product.discountEndTime).getTime();
-                        if (now > endTime) {
-                            // Endirim bitib, qiyməti sıfırla
-                            product.price = product.originalPrice;
-                            product.discountEndTime = null;
-                        }
-                    }
-                    return product;
+                thumbnailImg.addEventListener('click', () => {
+                    modalMainImage.src = imgSrc;
+                    document.querySelectorAll('.thumbnail').forEach(thumb => thumb.classList.remove('active'));
+                    thumbnailImg.classList.add('active');
                 });
-                saveProducts();
-            }
-
-
-            // Sifarişi tamamla düyməsi
-            checkoutButton.addEventListener('click', () => {
-                if (cart.size > 0) {
-                    let orderMessage = "Salam, sifariş vermək istəyirəm:\n\n";
-                    let total = 0;
-
-                    cart.forEach(item => {
-                        orderMessage += `- ${item.name} (${item.price.toFixed(2)} AZN)\n`;
-                        total += parseFloat(item.price);
-                    });
-
-                    orderMessage += `\nÜmumi qiymət: ${total.toFixed(2)} AZN`;
-
-                    const whatsappNumber = "994504495677"; // +994 50 449 56 77
-                    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(orderMessage)}`;
-
-                    window.open(whatsappUrl, '_blank');
-
-                    // Sifariş verildikdən sonra səbəti təmizlə
-                    cart.clear();
-                    updateCartDisplay();
-                    closeCart();
-                } else {
-                    showMessageBox('Sifarişi tamamlamaq üçün səbətiniz boş olmamalıdır.');
-                }
+                thumbnailContainer.appendChild(thumbnailImg);
             });
+
+            // Admin panel düymələrini gizli rejimə uyğun göstəririk
+            if (secretModeEnabled) {
+                modalDeleteBtn.classList.remove('hidden');
+                productDiscountSection.classList.remove('hidden');
+            } else {
+                modalDeleteBtn.classList.add('hidden');
+                productDiscountSection.classList.add('hidden');
+            }
+
+            productDetailModalOverlay.style.display = 'flex';
+        }
+
+        /**
+         * Səbəti yeniləyir və ekranda göstərir.
+         */
+        function updateCart() {
+            cartItemsContainer.innerHTML = '';
+            let total = 0;
+
+            if (cart.length === 0) {
+                emptyCartMessage.classList.remove('hidden');
+                checkoutButton.disabled = true;
+            } else {
+                emptyCartMessage.classList.add('hidden');
+                checkoutButton.disabled = false;
+
+                cart.forEach(item => {
+                    total += item.price * item.quantity;
+
+                    const cartItemDiv = document.createElement('div');
+                    cartItemDiv.classList.add('flex', 'items-center', 'justify-between', 'gap-4', 'p-4', 'bg-gray-100', 'rounded-xl', 'mb-4', 'shadow-sm');
+                    cartItemDiv.innerHTML = `
+                        <div class="flex items-center gap-4">
+                            <img src="${item.images[0]}" alt="${item.name}" class="w-16 h-16 object-cover rounded-lg">
+                            <div>
+                                <h5 class="font-bold text-lg text-blue-800">${item.name}</h5>
+                                <p class="text-violet-500 font-semibold">${(item.price * item.quantity).toFixed(2)} AZN</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button data-id="${item.id}" class="remove-from-cart-btn bg-red-400 text-white w-8 h-8 rounded-full hover:bg-red-500 transition-colors duration-300">-</button>
+                            <span>${item.quantity}</span>
+                            <button data-id="${item.id}" class="add-to-cart-btn bg-green-400 text-white w-8 h-8 rounded-full hover:bg-green-500 transition-colors duration-300">+</button>
+                            <button data-id="${item.id}" class="delete-from-cart-btn text-gray-500 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    `;
+                    cartItemsContainer.appendChild(cartItemDiv);
+                });
+            }
+
+            cartCountSpan.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+            cartTotalSpan.textContent = `${total.toFixed(2)} AZN`;
+        }
+
+        /**
+         * Məhsulu səbətə əlavə edir.
+         * @param {object} product Əlavə ediləcək məhsul obyekti.
+         */
+        function addToCart(product) {
+            const existingItem = cart.find(item => item.id === product.id);
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ ...product, quantity: 1 });
+            }
+            updateCart();
+            showMessageBox(`${product.name} səbətə əlavə edildi!`);
+        }
+        
+        // === Hadisə dinləyiciləri ===
+        // Bütün hadisə dinləyicilərini DOMContentLoaded içərisinə yerləşdirdik ki, səhifə tam yüklənəndən sonra işə düşsün
+        document.addEventListener('DOMContentLoaded', () => {
+            renderProducts(products);
             
-            // Hadisə dinləyiciləri
             mobileMenuButton.addEventListener('click', () => {
                 mobileMenu.classList.toggle('hidden');
             });
-            cartButton.addEventListener('click', openCart);
-            closeCartButton.addEventListener('click', closeCart);
-            cartOverlay.addEventListener('click', closeCart);
-            closeDetailButton.addEventListener('click', closeProductDetailModal);
-            productDetailModalOverlay.addEventListener('click', (e) => {
-                if (e.target.id === 'product-detail-modal-overlay') {
-                    closeProductDetailModal();
-                }
-            });
-            messageBoxCloseButton.addEventListener('click', closeMessageBox);
-            messageBoxOverlay.addEventListener('click', (e) => {
-                if (e.target.id === 'message-box-overlay' || e.target.id === 'message-box-close-button') {
-                    closeMessageBox();
-                }
+
+            cartButton.addEventListener('click', () => {
+                cartSidebar.classList.add('open');
+                cartOverlay.style.display = 'block';
             });
 
-            // Qalereya naviqasiya düymələri
-            prevBtn.addEventListener('click', () => {
-                currentImageIndex = (currentImageIndex - 1 + currentProductImages.length) % currentProductImages.length;
-                updateGallery();
-            });
-            nextBtn.addEventListener('click', () => {
-                currentImageIndex = (currentImageIndex + 1) % currentProductImages.length;
-                updateGallery();
+            closeCartButton.addEventListener('click', () => {
+                cartSidebar.classList.remove('open');
+                cartOverlay.style.display = 'none';
             });
             
-            // Filtr düymələri üçün ümumi dinləyici
+            cartOverlay.addEventListener('click', () => {
+                cartSidebar.classList.remove('open');
+                cartOverlay.style.display = 'none';
+            });
+
+            productListContainer.addEventListener('click', (e) => {
+                const productCard = e.target.closest('.product-card');
+                if (productCard) {
+                    const productId = productCard.dataset.id;
+                    const product = products.find(p => p.id === productId);
+                    if (product) {
+                        showProductDetail(product);
+                    }
+                }
+            });
+
+            closeDetailButton.addEventListener('click', () => {
+                productDetailModalOverlay.style.display = 'none';
+            });
+            
+            productDetailModalOverlay.addEventListener('click', (e) => {
+                if (e.target === productDetailModalOverlay) {
+                    productDetailModalOverlay.style.display = 'none';
+                }
+            });
+
             filterButtonsContainer.addEventListener('click', (e) => {
                 const button = e.target.closest('.filter-button');
-                const deleteButton = e.target.closest('.delete-collection-btn');
-
                 if (button) {
+                    // Aktiv düymə stilini dəyişirik
                     document.querySelectorAll('.filter-button').forEach(btn => btn.classList.remove('active'));
                     button.classList.add('active');
 
-                    const filter = button.dataset.filter;
-                    const filteredProducts = products.filter(product => {
-                        return filter === 'all' || product.categories.includes(filter);
-                    });
-                    renderProducts(filteredProducts);
-                    
-                    if (secretMode) {
-                        updateFilterButtons();
-                    }
-                }
-
-                if (deleteButton) {
-                    const filter = deleteButton.dataset.filter;
-                    const filterName = deleteButton.parentElement.querySelector('.filter-button').textContent;
-                    showConfirmation(`"${filterName}" kolleksiyasına aid bütün məhsulları silmək istədiyinizdən əminsiniz?`, () => {
-                        products = products.filter(product => !product.categories.includes(filter));
-                        saveProducts();
-                        renderProducts();
-                        updateFilterButtons();
-                        showMessageBox(`"${filterName}" kolleksiyası uğurla silindi.`);
-                    });
-                }
-            });
-            
-            // Məhsul detal modalı içindəki endirim düymələri üçün dinləyici
-            productDiscountSection.addEventListener('click', (e) => {
-                const discountBtn = e.target.closest('.discount-option-btn-product');
-                if (discountBtn) {
-                    const discount = parseInt(discountBtn.dataset.discount);
-                    if (currentProductIdForDiscount !== null) {
-                        applyProductDiscount(currentProductIdForDiscount, discount);
+                    const filterCategory = button.dataset.filter;
+                    if (filterCategory === 'all') {
+                        renderProducts(products);
+                    } else {
+                        const filteredProducts = products.filter(p => p.category.includes(filterCategory));
+                        renderProducts(filteredProducts);
                     }
                 }
             });
 
-            // Məhsul kartları üçün dinləyici (event delegation)
-            productList.addEventListener('click', (e) => {
-                const productCard = e.target.closest('.product-card');
-                const addToCartBtn = e.target.closest('.add-to-cart-btn');
-                
-                if (addToCartBtn) {
-                    const productName = addToCartBtn.dataset.name;
-                    const productPrice = parseFloat(addToCartBtn.dataset.price);
-                    const productImage = addToCartBtn.dataset.image;
-                    addToCart(productName, productPrice, productImage);
-                } else if (productCard) {
-                    const productData = {
-                        id: parseInt(productCard.dataset.id),
-                        name: productCard.dataset.name,
-                        price: parseFloat(productCard.dataset.price),
-                        images: JSON.parse(productCard.dataset.images),
-                        description: productCard.dataset.description,
-                        originalPrice: productCard.dataset.originalPrice ? parseFloat(productCard.dataset.originalPrice) : parseFloat(productCard.dataset.price),
-                        discountEndTime: productCard.dataset.discountEndTime || null
-                    };
-                    openProductDetailModal(productData);
-                }
-            });
-
-            // "Səbətə Əlavə Et" düyməsi
             modalAddToCartBtn.addEventListener('click', () => {
-                const productName = modalAddToCartBtn.dataset.name;
-                const productPrice = parseFloat(modalAddToCartBtn.dataset.price);
-                const productImage = modalAddToCartBtn.dataset.image;
-                addToCart(productName, productPrice, productImage);
-                closeProductDetailModal();
+                if (currentModalProduct) {
+                    addToCart(currentModalProduct);
+                    productDetailModalOverlay.style.display = 'none';
+                }
             });
 
-            // Yeni əlavə olunmuş fərdi silmə düyməsi
-            modalDeleteBtn.addEventListener('click', () => {
-                const productId = parseInt(modalDeleteBtn.dataset.id);
-                const productName = modalDeleteBtn.dataset.name;
-                
-                showConfirmation(`"${productName}" məhsulunu silmək istədiyinizdən əminsiniz?`, () => {
-                    products = products.filter(product => product.id !== productId);
-                    saveProducts();
-                    renderProducts();
-                    closeProductDetailModal();
-                    showMessageBox(`"${productName}" məhsulu uğurla silindi.`);
-                });
-            });
-
-            // Səbətdən silmə düyməsi
             cartItemsContainer.addEventListener('click', (e) => {
-                const removeButton = e.target.closest('.remove-item');
-                if (removeButton) {
-                    const productName = removeButton.dataset.name;
-                    removeFromCart(productName);
+                const id = e.target.closest('button')?.dataset.id;
+                if (!id) return;
+
+                const item = cart.find(i => i.id === id);
+                if (!item) return;
+
+                if (e.target.classList.contains('add-to-cart-btn')) {
+                    item.quantity++;
+                } else if (e.target.classList.contains('remove-from-cart-btn')) {
+                    if (item.quantity > 1) {
+                        item.quantity--;
+                    } else {
+                        cart = cart.filter(i => i.id !== id);
+                    }
+                } else if (e.target.closest('.delete-from-cart-btn')) {
+                    cart = cart.filter(i => i.id !== id);
                 }
+                updateCart();
             });
 
+            messageBoxCloseButton.addEventListener('click', () => {
+                messageBoxOverlay.style.display = 'none';
+            });
 
-            // Özəl giriş linkinə klik
+            // Özəl giriş linkinə klik hadisəsi
             privateAccessLink.addEventListener('click', (e) => {
-                e.preventDefault();
+                e.preventDefault(); // Səhifənin yuxarıya sürüşməsinin qarşısını alır
                 passwordModalOverlay.style.display = 'flex';
-                passwordInput.value = '';
-                passwordError.style.display = 'none';
             });
 
-            // Şifrə modalını bağlayır
-            passwordModalOverlay.addEventListener('click', (e) => {
-                if (e.target.id === 'password-modal-overlay') {
-                    passwordModalOverlay.style.display = 'none';
-                }
-            });
-
-            // Şifrəni təsdiqlə
             submitPasswordBtn.addEventListener('click', () => {
-                if (passwordInput.value === correctPassword) {
+                const password = passwordInput.value;
+                // Şifrəni 1975 olaraq dəyişdik
+                if (password === '1975') {
+                    secretModeEnabled = true;
                     passwordModalOverlay.style.display = 'none';
                     secretContent.style.display = 'block';
-                    secretMode = true; // Gizli rejimi aktivləşdir
                     document.body.classList.add('secret-mode-background');
-                    updateFilterButtons(); // "Sil" düymələrini göstər
-                    setupDailyVisitorCounter(); // Günlük ziyaretçi sayacını başlat
-                    showMessageBox('Şifrə düzgündür! Məhsul idarəetmə bölməsi açıldı.');
+                    showMessageBox('Gizli idarəetmə paneli aktivləşdirildi!');
+                    renderProducts(products); // Məhsulları yenidən render edirik
                 } else {
-                    passwordError.style.display = 'block';
-                }
-            });
-
-            // Enter düyməsi ilə şifrəni yoxla
-            passwordInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    submitPasswordBtn.click();
+                    passwordError.classList.remove('hidden');
+                    passwordInput.value = '';
                 }
             });
             
-            // Çoxsaylı şəkil yükləmə
-            fileInput.addEventListener('change', function(event) {
-                previewContainer.innerHTML = ''; // Əvvəlki önizləmələri təmizlə
-                const files = event.target.files;
+            fileInput.addEventListener('change', (e) => {
+                previewContainer.innerHTML = ''; // Köhnə önizləmələri təmizləyirik
+                const files = e.target.files;
                 if (files.length > 0) {
-                    noPreviewText.style.display = 'none';
+                    noPreviewText.classList.add('hidden');
                     for (const file of files) {
                         const reader = new FileReader();
-                        reader.onload = function(e) {
+                        reader.onload = (event) => {
                             const img = document.createElement('img');
-                            img.src = e.target.result;
-                            img.alt = file.name;
-                            img.className = 'w-24 h-24 object-cover rounded-md border border-gray-300';
+                            img.src = event.target.result;
+                            img.classList.add('w-24', 'h-24', 'object-cover', 'rounded-lg', 'shadow-md');
                             previewContainer.appendChild(img);
                         };
                         reader.readAsDataURL(file);
                     }
                 } else {
-                    noPreviewText.style.display = 'flex';
+                     noPreviewText.classList.remove('hidden');
                 }
             });
 
-            // Yeni məhsul əlavə etmək üçün form
-            uploadForm.addEventListener('submit', async (e) => {
+            productUploadForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 
-                const name = productNameInput.value.trim();
-                const description = productDescriptionInput.value.trim();
-                const price = parseFloat(productPriceInput.value);
-                const category = productCategorySelect.value;
+                const name = document.getElementById('product-name').value;
+                const description = document.getElementById('product-description').value;
+                const price = parseFloat(document.getElementById('product-price').value);
+                const category = [document.getElementById('product-category').value];
                 const files = fileInput.files;
 
-                if (!name || !description || isNaN(price) || price <= 0 || files.length === 0) {
-                    showMessageBox('Zəhmət olmasa, bütün sahələri doldurun və ən azı bir şəkil seçin.');
+                if (!name || !description || isNaN(price) || files.length === 0) {
+                    showMessageBox('Zəhmət olmasa bütün sahələri doldurun və şəkil əlavə edin.');
                     return;
                 }
+
+                submitProductBtn.disabled = true;
+                submitProductBtn.innerHTML = '<div class="loader"></div>';
                 
-                const images = await Promise.all(
-                    Array.from(files).map(file => {
-                        return new Promise(resolve => {
+                try {
+                    // Şəkilləri oxuyub Data URL kimi saxlamaq üçün Promise-dən istifadə edirik
+                    const imagePromises = Array.from(files).map(file => {
+                        return new Promise((resolve, reject) => {
                             const reader = new FileReader();
-                            reader.onload = e => resolve(e.target.result);
+                            reader.onload = () => resolve(reader.result);
+                            reader.onerror = reject;
                             reader.readAsDataURL(file);
                         });
-                    })
-                );
+                    });
 
-                const newProduct = {
-                    id: Date.now(),
-                    name: name,
-                    description: description,
-                    price: price,
-                    originalPrice: price, // Orijinal qiyməti yeni məhsula əlavə et
-                    images: images,
-                    categories: [category],
-                    discountEndTime: null // Yeni məhsulda endirim vaxtı yoxdur
-                };
+                    const imageUrls = await Promise.all(imagePromises);
 
-                products.push(newProduct);
-                saveProducts();
-                
-                renderProducts();
-                
-                uploadForm.reset();
-                previewContainer.innerHTML = '<p id="no-preview-text" class="text-gray-500 italic flex items-center justify-center w-full">Şəkillər burda görünəcək.</p>';
-                
-                showMessageBox('Yeni məhsul uğurla əlavə edildi!');
+                    const newProduct = {
+                        id: `p${products.length + 1}`,
+                        name,
+                        description,
+                        price,
+                        originalPrice: null,
+                        discount: 0,
+                        images: imageUrls,
+                        category,
+                        isDiscounted: false
+                    };
+                    
+                    products.push(newProduct);
+                    renderProducts(products);
+                    productUploadForm.reset();
+                    previewContainer.innerHTML = `<p id="no-preview-text" class="text-gray-500 italic flex items-center justify-center w-full">Şəkillər burda görünəcək.</p>`;
+                    showMessageBox('Yeni məhsul uğurla əlavə edildi!');
+                } catch (error) {
+                    console.error("Şəkil yüklənərkən xəta baş verdi:", error);
+                    showMessageBox('Şəkil yüklənərkən bir xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.');
+                } finally {
+                    submitProductBtn.disabled = false;
+                    submitProductBtn.innerHTML = 'Məhsulu Yüklə';
+                }
             });
             
-            // "Bütün Məhsulları Sil" düyməsi
-            clearProductsButton.addEventListener('click', () => {
-                showConfirmation('Bütün məhsulları silmək istədiyinizdən əminsiniz? Bu əməliyyat geri qaytarıla bilməz.', () => {
+            clearProductsBtn.addEventListener('click', () => {
+                showConfirmationModal('Əminsiniz? Bütün məhsullar silinəcək.', () => {
                     products = [];
-                    localStorage.removeItem('mubagProducts');
-                    renderProducts();
-                    showMessageBox('Bütün məhsullar silindi.');
+                    renderProducts(products);
+                    hideConfirmationModal();
+                    showMessageBox('Bütün məhsullar silindi!');
                 });
             });
+
+            modalDeleteBtn.addEventListener('click', () => {
+                if (currentModalProduct) {
+                    showConfirmationModal(`Əminsiniz? "${currentModalProduct.name}" məhsulu silinəcək.`, () => {
+                        products = products.filter(p => p.id !== currentModalProduct.id);
+                        renderProducts(products);
+                        productDetailModalOverlay.style.display = 'none';
+                        hideConfirmationModal();
+                        showMessageBox('Məhsul uğurla silindi!');
+                    });
+                }
+            });
             
-            // Səhifə yüklənəndə məhsulları yüklə, render et və Firebase-i başlat
-            window.onload = async () => {
-                await initFirebase(); // Firebase'i başlat
-                loadProducts();
-                renderProducts();
-                updateCartDisplay();
-                logPageVisit(); // Ana səhifəyə girişi qeyd et
+            // Endirim düymələri üçün hadisə dinləyicisi
+            productDiscountSection.addEventListener('click', (e) => {
+                const button = e.target.closest('.discount-option-btn-product');
+                if (button && currentModalProduct) {
+                    const discount = parseInt(button.dataset.discount, 10);
+                    const originalPrice = currentModalProduct.originalPrice || currentModalProduct.price;
+
+                    if (discount === 0) {
+                        currentModalProduct.isDiscounted = false;
+                        currentModalProduct.discount = 0;
+                        currentModalProduct.price = originalPrice;
+                        currentModalProduct.originalPrice = null;
+                    } else {
+                        currentModalProduct.isDiscounted = true;
+                        currentModalProduct.discount = discount;
+                        currentModalProduct.originalPrice = originalPrice;
+                        currentModalProduct.price = originalPrice - (originalPrice * discount / 100);
+                    }
+                    
+                    showProductDetail(currentModalProduct);
+                }
+            });
+
+            // Təsdiq modalı düymələri
+            confirmYesButton.addEventListener('click', () => {
+                if (confirmationCallback) {
+                    confirmationCallback();
+                }
+            });
+            
+            confirmNoButton.addEventListener('click', () => {
+                hideConfirmationModal();
+            });
+            
+            checkoutButton.addEventListener('click', () => {
+                showMessageBox('Sifarişiniz uğurla yerləşdirildi. Təşəkkür edirik!');
+                cart = [];
+                updateCart();
+                cartSidebar.classList.remove('open');
+                cartOverlay.style.display = 'none';
+            });
+
+            // === Firebase Ziyarətçi Sayğacı Logikası ===
+            const updateVisitorCount = async () => {
+                try {
+                    // Bugünün tarixini "YYYY-MM-DD" formatında alırıq
+                    const today = new Date();
+                    const year = today.getFullYear();
+                    const month = String(today.getMonth() + 1).padStart(2, '0');
+                    const day = String(today.getDate()).padStart(2, '0');
+                    const todayDocId = `${year}-${month}-${day}`;
+
+                    // Firestore-da sənədə istinad alırıq
+                    const visitorDocRef = doc(db, `artifacts/${appId}/public/data/visitorCounts/${todayDocId}`);
+
+                    // Sənədi yeniləyir və ya yaradırıq.
+                    // update() əvəzinə setDoc() və merge: true istifadə edirik ki, əgər sənəd yoxdursa yaradılsın.
+                    await setDoc(visitorDocRef, { count: increment(1) }, { merge: true });
+
+                } catch (error) {
+                    console.error("Ziyarətçi sayğacını yeniləyərkən xəta baş verdi:", error);
+                }
             };
 
+            // Səhifə yüklənərkən sayğacı artırırıq
+            updateVisitorCount();
+
+            // Real vaxtda dəyişiklikləri dinləyirik
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const todayDocId = `${year}-${month}-${day}`;
+            const visitorDocRef = doc(db, `artifacts/${appId}/public/data/visitorCounts/${todayDocId}`);
+
+            onSnapshot(visitorDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    dailyVisitorCountSpan.textContent = data.count || 0;
+                } else {
+                    dailyVisitorCountSpan.textContent = 0;
+                }
+            });
         });
     </script>
 </body>
