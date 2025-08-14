@@ -17,15 +17,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     
     <style>
-        /* General body styles */
+        /* Ümumi bədən stili */
         body {
             font-family: 'Inter', sans-serif;
             overflow-x: hidden;
-            background-color: #f7f3e9; /* Cream tone */
-            color: #1e3a8a; /* Main text color - dark blue */
+            background-color: #f7f3e9; /* Krem tonu */
+            color: #1e3a8a; /* Əsas mətn rəngi - tünd göy */
+            transition: background-color 0.5s ease, color 0.5s ease;
         }
 
-        /* Hero section animation */
+        /* Qəhrəman bölməsi animasiyası */
         @keyframes fadeInMoveUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -37,7 +38,7 @@
 
         .delay-200 { animation-delay: 0.2s; }
 
-        /* Filter button styles */
+        /* Filtr düyməsi stilləri */
         .filter-button {
             transition: all 0.3s ease-in-out;
             @apply bg-gray-200 text-gray-800 py-2 px-6 rounded-full font-medium hover:bg-violet-400 hover:text-white;
@@ -46,18 +47,41 @@
             @apply bg-violet-500 text-white;
         }
 
-        /* Product card styles */
+        /* Məhsul kartı stilləri */
         .product-card {
             cursor: pointer;
             transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            position: relative; /* Endirim işarəsi üçün */
         }
         .product-card:hover {
             transform: scale(1.03);
-            box-shadow: 0 15px 30px rgba(124, 58, 237, 0.2); /* Purple shadow */
+            box-shadow: 0 15px 30px rgba(124, 58, 237, 0.2); /* Bənövşəyi kölgə */
+        }
+        
+        /* Endirim işarəsi */
+        .discount-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #ef4444; /* Qırmızı */
+            color: white;
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: bold;
         }
 
-        /* Message box styles */
-        .message-box-overlay, .product-detail-modal-overlay, .password-modal-overlay {
+        /* Məhsulun üzərindəki qiymət stili */
+        .original-price {
+            text-decoration: line-through;
+            color: #9ca3af; /* Boz rəng */
+            font-size: 0.875rem;
+            margin-right: 8px;
+        }
+
+
+        /* Mesaj qutusu stilləri */
+        .message-box-overlay, .product-detail-modal-overlay, .password-modal-overlay, .confirmation-modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -71,10 +95,10 @@
         }
         .message-box, .password-modal {
             background-color: #ffffff;
-            color: #1e3a8a; /* Dark blue text */
+            color: #1e3a8a; /* Tünd göy mətn */
             padding: 2rem;
             border-radius: 1rem;
-            border: 1px solid #c4b5fd; /* Light purple border */
+            border: 1px solid #c4b5fd; /* Açıq bənövşəyi haşiyə */
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
             width: 90%;
             max-width: 400px;
@@ -82,7 +106,7 @@
             animation: fadeInMoveUp 0.3s ease-out;
         }
 
-        /* Cart sidebar styles */
+        /* Səbət kənar çubuğu stilləri */
         .cart-sidebar {
             position: fixed;
             top: 0;
@@ -97,7 +121,7 @@
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            border-left: 1px solid #c4b5fd; /* Light purple border */
+            border-left: 1px solid #c4b5fd; /* Açıq bənövşəyi haşiyə */
         }
         .cart-sidebar.open {
             transform: translateX(0);
@@ -113,22 +137,22 @@
             display: none;
         }
 
-        /* Detail modal styles */
+        /* Detal modal stilləri */
         .product-detail-modal {
             background-color: #ffffff;
-            color: #1e3a8a; /* Dark blue text */
+            color: #1e3a8a; /* Tünd göy mətn */
             border-radius: 1.5rem;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             max-width: 900px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
-            border: 1px solid #c4b5fd; /* Light purple border */
+            border: 1px solid #c4b5fd; /* Açıq bənövşəyi haşiyə */
             position: relative;
             animation: fadeInMoveUp 0.3s ease-out;
         }
 
-        /* Custom scrollbar styles */
+        /* Xüsusi kaydırma çubuğu stilləri */
         .custom-scrollbar::-webkit-scrollbar {
             width: 8px;
         }
@@ -137,7 +161,7 @@
             border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #c4b5fd; /* Light purple scrollbar */
+            background: #c4b5fd; /* Açıq bənövşəyi kaydırma çubuğu */
             border-radius: 10px;
             border: 2px solid #e5e5e5;
         }
@@ -150,12 +174,12 @@
             cursor: not-allowed;
         }
         
-        /* Hidden section styles */
+        /* Gizli bölmə stilləri */
         #secret-content {
             display: none;
         }
         
-        /* New image upload section styles */
+        /* Yeni şəkil yükləmə bölməsi stilləri */
         .upload-container {
             min-height: 400px;
         }
@@ -171,11 +195,114 @@
             color: #6b7280;
             margin-top: 5rem;
         }
+        
+        /* Şəkil qalereyası stilləri */
+        .gallery-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 1rem;
+        }
+        .thumbnail-container {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .thumbnail {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: border-color 0.3s ease-in-out;
+        }
+        .thumbnail.active {
+            border-color: #8b5cf6; /* Bənövşəyi haşiyə */
+        }
+        .gallery-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+        .gallery-nav-btn:hover {
+            background-color: rgba(0,0,0,0.8);
+        }
+        .gallery-nav-btn.prev {
+            left: 1rem;
+        }
+        .gallery-nav-btn.next {
+            right: 1rem;
+        }
+
+        /* === Gizli Bölmə Stilləri === */
+        
+        .secret-mode-background {
+            background: linear-gradient(135deg, #2c3e50, #34495e, #1c2b36, #415a77);
+            background-size: 400% 400%;
+            animation: moveBackground 30s ease infinite; /* Yavaş ve sonsuz animasyon */
+            transition: background-color 0.5s ease;
+            color: #e0e0e0;
+        }
+        @keyframes moveBackground {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #secret-content .p-10 {
+            background-color: rgba(255, 255, 255, 0.05); /* Yarı saydam beyaz */
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .visitor-counter {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 9999px; /* Tailwind'in rounded-full karşılığı */
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+        }
+
+        /* Yeni endirim düymələri stili */
+        .discount-option-btn-product {
+            transition: all 0.2s ease-in-out;
+            @apply bg-gray-200 text-gray-800 py-2 px-4 rounded-full font-medium hover:bg-green-500 hover:text-white;
+        }
+
+        /* Taymer stili */
+        .countdown-timer-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #ef4444; /* Qırmızı fon */
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            margin-top: 1rem;
+            font-weight: bold;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .countdown-timer-container .time-unit {
+            font-size: 2rem;
+            margin: 0 0.5rem;
+        }
+        .countdown-timer-container .label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body class="bg-[#f7f3e9] text-blue-800 antialiased">
 
-    <!-- Navigation Bar -->
+    <!-- Naviqasiya çubuğu -->
     <nav class="p-6 md:p-8 flex justify-between items-center bg-white border-b border-gray-200">
         <a href="#" class="text-2xl md:text-3xl font-bold text-violet-500 tracking-wider">MUBAG STYLE</a>
         <div class="hidden md:flex space-x-8 text-lg font-medium">
@@ -195,7 +322,7 @@
         </div>
     </nav>
 
-    <!-- Mobile menu -->
+    <!-- Mobil menyu -->
     <div id="mobile-menu" class="hidden md:hidden bg-white text-center border-b border-gray-200">
         <a href="#" class="block py-4 text-blue-800 hover:bg-gray-100 transition-colors duration-300">Ana Səhifə</a>
         <a href="#products" class="block py-4 text-blue-800 hover:bg-gray-100 transition-colors duration-300">Kolleksiya</a>
@@ -203,11 +330,11 @@
         <a href="#contact-us" class="block py-4 text-blue-800 hover:bg-gray-100 transition-colors duration-300">Əlaqə</a>
     </div>
 
-    <!-- Hero section -->
+    <!-- Qəhrəman bölməsi -->
     <header class="relative bg-white h-[60vh] md:h-[80vh] flex items-center justify-center text-center px-4 overflow-hidden">
         <div class="absolute inset-0">
-            <!-- Background image -->
-            <img src="https://images.unsplash.com/photo-1543324671-155452f1e944?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Background Image" class="w-full h-full object-cover opacity-20">
+            <!-- Arxa plan şəkili -->
+            <img src="https://images.unsplash.com/photo-1543324671-155452f1e944?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Arxa plan şəkili" class="w-full h-full object-cover opacity-20">
         </div>
         <div class="relative z-10 p-6 md:p-12 rounded-xl bg-white bg-opacity-80 backdrop-filter backdrop-blur-sm border border-gray-300 shadow-lg">
             <h1 class="text-4xl md:text-6xl font-extrabold text-violet-500 mb-4 animate-fade-in-up">Zəriflik və Stil Sizinlə</h1>
@@ -216,10 +343,17 @@
         </div>
     </header>
 
-    <!-- Hidden section, visible after correct password -->
-    <section id="secret-content" class="container mx-auto px-4 my-12">
-        <div class="p-10 bg-blue-900 text-white rounded-xl shadow-2xl">
-            <h2 class="text-3xl font-bold mb-8 text-center text-white">Yeni Məhsul İdarəçiliyi</h2>
+    <!-- Şifrə daxil edildikdən sonra görünən gizli bölmə -->
+    <section id="secret-content" class="relative container mx-auto px-4 my-12 transition-all duration-500 ease-in-out">
+        <div class="p-10 bg-blue-900 text-white rounded-xl shadow-2xl space-y-8">
+            <h2 class="text-3xl font-bold text-center text-white">Gizli İdarəetmə Paneli</h2>
+            
+            <!-- Yeni günlük ziyaretçi sayacı bölümü -->
+            <div id="daily-visitor-info" class="bg-violet-500 p-6 rounded-xl shadow-md text-white text-center">
+                <h3 class="text-2xl font-bold mb-2">Bugünkü Ziyarətçi Sayı:</h3>
+                <span id="daily-visitor-count" class="text-4xl font-extrabold tracking-wide">...</span>
+            </div>
+
             <div class="bg-white p-8 rounded-2xl shadow-xl max-w-2xl mx-auto w-full text-center upload-container">
                 <form id="product-upload-form" class="space-y-6 text-gray-800 text-left">
                     <h3 class="text-2xl font-bold text-violet-500 mb-4">Yeni Məhsul Əlavə Et</h3>
@@ -250,12 +384,13 @@
                         </select>
                     </div>
                     <div>
-                        <label for="fileInput" class="block text-sm font-medium text-gray-700 mb-1">Şəkil seçin</label>
-                        <input type="file" id="fileInput" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100">
+                        <label for="fileInput" class="block text-sm font-medium text-gray-700 mb-1">Şəkilləri seçin (birdən çox şəkil)</label>
+                        <input type="file" id="fileInput" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" multiple>
                     </div>
-
-                    <div class="w-full h-80 bg-gray-200 rounded-xl overflow-hidden flex items-center justify-center border border-gray-300 shadow-inner">
-                        <img id="previewImage" src="https://placehold.co/400x320/e5e7eb/6b7280?text=Şəkil+yükləyin" alt="Seçilmiş şəkil burada görünəcək" class="preview-image">
+                    
+                    <!-- Şəkil önizləmələri üçün yeni div -->
+                    <div id="preview-container" class="w-full min-h-[100px] p-2 bg-gray-100 rounded-xl overflow-x-auto flex gap-4 border border-gray-300 shadow-inner">
+                        <p id="no-preview-text" class="text-gray-500 italic flex items-center justify-center w-full">Şəkillər burda görünəcək.</p>
                     </div>
                     
                     <button type="submit" class="w-full bg-violet-500 text-white font-bold py-3 px-6 rounded-full hover:bg-violet-600 transition duration-300 ease-in-out transform hover:scale-105">
@@ -264,7 +399,7 @@
                 </form>
 
                 <div class="mt-10 pt-6 border-t border-gray-200 text-left">
-                    <h3 class="text-2xl font-bold text-violet-500 mb-4">Məhsulları Toplu Sil</h3>
+                    <h3 class="text-2xl font-bold text-violet-500 mb-4">Məhsulları Toplu İdarə Et</h3>
                     <div class="flex flex-col space-y-4 items-center">
                         <button type="button" id="clear-products-btn" class="w-full bg-red-500 text-white font-bold py-3 px-6 rounded-full hover:bg-red-600 transition duration-300 ease-in-out transform hover:scale-105">
                             Bütün Məhsulları Sil
@@ -275,14 +410,14 @@
         </div>
     </section>
 
-    <!-- Products and Filter section -->
+    <!-- Məhsullar və Filtr bölməsi -->
     <section id="products" class="py-16 md:py-24 bg-[#f7f3e9]">
         <div class="container mx-auto px-4 flex flex-col md:flex-row gap-8">
-            <!-- Filter Panel -->
+            <!-- Filtr Paneli -->
             <div class="md:w-1/4 bg-white p-6 rounded-xl border border-gray-200 h-fit">
                 <h3 class="text-2xl font-bold text-violet-500 mb-6">Kateqoriyalar</h3>
                 <div id="filter-buttons-container" class="flex flex-wrap md:flex-col gap-3">
-                    <!-- Filter buttons managed by JS -->
+                    <!-- Filtr düymələri JS tərəfindən idarə olunur -->
                     <div class="flex items-center gap-2" id="filter-wrapper-all">
                         <button class="filter-button active" data-filter="all">Hamısı</button>
                     </div>
@@ -316,11 +451,11 @@
                 </div>
             </div>
             
-            <!-- Product list -->
+            <!-- Məhsul siyahısı -->
             <div class="md:w-3/4">
                 <h2 class="text-4xl md:text-5xl font-bold text-center text-violet-500 mb-12 hidden md:block">Yeni Kolleksiya</h2>
                 <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- Product cards will be dynamically filled here by JavaScript -->
+                    <!-- Məhsul kartları buraya JS tərəfindən dinamik olaraq əlavə ediləcək -->
                     <p id="no-products-message" class="no-products-message hidden">Hələ heç bir məhsul əlavə edilməyib.</p>
                 </div>
             </div>
@@ -359,7 +494,7 @@
         </div>
     </section>
 
-    <!-- Footer section -->
+    <!-- Alt yazı bölməsi -->
     <footer class="bg-blue-900 text-white py-12 px-4">
         <div class="container mx-auto text-center">
             <h4 class="text-2xl font-bold mb-2">
@@ -370,7 +505,7 @@
         </div>
     </footer>
 
-    <!-- Cart sidebar -->
+    <!-- Səbət kənar çubuğu -->
     <div id="cart-overlay" class="cart-overlay"></div>
     <div id="cart-sidebar" class="cart-sidebar custom-scrollbar">
         <div class="p-6 flex items-center justify-between border-b border-gray-200">
@@ -380,7 +515,7 @@
             </button>
         </div>
         <div id="cart-items" class="p-6 flex-grow overflow-y-auto">
-            <!-- Cart items will be added here -->
+            <!-- Səbət məhsulları buraya əlavə ediləcək -->
             <p id="empty-cart-message" class="text-center text-gray-500 italic">Səbətiniz boşdur.</p>
         </div>
         <div class="p-6 border-t border-gray-200">
@@ -392,22 +527,59 @@
         </div>
     </div>
 
-    <!-- Product Detail Modal -->
+    <!-- Məhsul Detal Modalı -->
     <div id="product-detail-modal-overlay" class="product-detail-modal-overlay">
         <div id="product-detail-modal" class="product-detail-modal">
             <div class="p-8">
                 <button id="close-detail-button" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 focus:outline-none">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
-                <div class="grid md:grid-cols-2 gap-8 items-center">
-                    <img id="modal-image" src="" alt="" class="w-full h-auto rounded-lg shadow-xl">
+                <div class="grid md:grid-cols-2 gap-8 items-start">
+                    <!-- Şəkil qalereyası -->
+                    <div class="relative">
+                        <img id="modal-main-image" src="" alt="" class="gallery-image shadow-xl">
+                        <div class="thumbnail-container" id="thumbnail-container">
+                            <!-- Kiçik şəkillər dinamik olaraq buraya əlavə ediləcək -->
+                        </div>
+                        <button id="prev-btn" class="gallery-nav-btn prev">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button id="next-btn" class="gallery-nav-btn next">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
                     <div>
                         <h3 id="modal-name" class="text-4xl font-extrabold text-violet-500 mb-4"></h3>
                         <p id="modal-description" class="text-gray-700 mb-6"></p>
-                        <span id="modal-price" class="text-3xl font-bold text-violet-500"></span>
+                        <div class="flex flex-col md:flex-row md:items-center justify-between mb-4">
+                            <span id="modal-price" class="text-3xl font-bold text-violet-500"></span>
+                            <!-- Yeni Endirim Taymeri Bölməsi -->
+                            <div id="countdown-timer-display" class="hidden countdown-timer-container mt-4 md:mt-0">
+                                <span class="text-xl">Endirim bitməsinə:</span>
+                                <div class="flex items-center ml-4">
+                                    <span id="timer-minutes" class="time-unit">00</span>
+                                    <span class="text-2xl mx-1">:</span>
+                                    <span id="timer-seconds" class="time-unit">00</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Yeni Endirim Bölməsi, yalnız gizli rejimdə görünür -->
+                        <div id="product-discount-section" class="hidden mt-8 p-4 bg-gray-100 rounded-lg border border-gray-200">
+                             <h4 class="text-lg font-semibold text-gray-700 mb-4">Endirim Tətbiq Et</h4>
+                             <div class="flex flex-wrap gap-2">
+                                <button class="discount-option-btn-product" data-discount="10">10%</button>
+                                <button class="discount-option-btn-product" data-discount="20">20%</button>
+                                <button class="discount-option-btn-product" data-discount="30">30%</button>
+                                <button class="discount-option-btn-product" data-discount="50">50%</button>
+                                <button class="discount-option-btn-product" data-discount="70">70%</button>
+                                <button class="discount-option-btn-product bg-red-500 text-white" data-discount="0">Sıfırla</button>
+                             </div>
+                        </div>
+
                         <div class="mt-8 flex flex-col sm:flex-row gap-4">
                             <button id="modal-add-to-cart-btn" class="flex-grow bg-violet-500 text-white py-4 px-10 rounded-full font-bold text-lg hover:bg-violet-600 transition-colors duration-300">Səbətə Əlavə Et</button>
-                            <!-- New delete button, visible only in secret mode -->
+                            <!-- Yeni sil düyməsi, yalnız gizli rejimdə görünür -->
                             <button id="modal-delete-btn" class="flex-grow bg-red-500 text-white py-4 px-10 rounded-full font-bold text-lg hover:bg-red-600 transition-colors duration-300 hidden">Sil</button>
                         </div>
                     </div>
@@ -416,9 +588,9 @@
         </div>
     </div>
     
-    <!-- Password Modal -->
+    <!-- Şifrə Modalı -->
     <div id="password-modal-overlay" class="password-modal-overlay">
-        <div id="password-modal" class="password-modal">
+        <div id="password-modal" class="message-box">
             <h4 class="text-2xl font-bold mb-4">Gizli Bölməyə Giriş</h4>
             <p class="text-gray-600 mb-6">Davam etmək üçün şifrəni daxil edin:</p>
             <input type="password" id="password-input" class="w-full p-3 rounded-lg border border-gray-300 mb-4 text-center focus:outline-none focus:ring-2 focus:ring-violet-500 text-blue-800" placeholder="Şifrəni yazın...">
@@ -426,8 +598,8 @@
             <p id="password-error" class="text-red-500 mt-2 hidden">Şifrə yanlışdır!</p>
         </div>
     </div>
-
-    <!-- Custom message box -->
+    
+    <!-- Xüsusi mesaj qutusu -->
     <div id="message-box-overlay" class="message-box-overlay">
         <div id="message-box" class="message-box">
             <p id="message-box-text" class="text-lg mb-6"></p>
@@ -435,8 +607,8 @@
         </div>
     </div>
 
-    <!-- Confirmation Modal -->
-    <div id="confirmation-modal-overlay" class="message-box-overlay">
+    <!-- Təsdiq Modalı -->
+    <div id="confirmation-modal-overlay" class="confirmation-modal-overlay">
         <div id="confirmation-modal" class="message-box">
             <p id="confirmation-text" class="text-lg mb-6 font-semibold"></p>
             <div class="flex justify-around space-x-4">
@@ -446,8 +618,11 @@
         </div>
     </div>
 
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    <script>
         document.addEventListener('DOMContentLoaded', () => {
             // DOM elementlərinə müraciət
             const mobileMenuButton = document.getElementById('mobile-menu-button');
@@ -466,12 +641,18 @@
             const productDetailModalOverlay = document.getElementById('product-detail-modal-overlay');
             const productDetailModal = document.getElementById('product-detail-modal');
             const closeDetailButton = document.getElementById('close-detail-button');
-            const modalImage = document.getElementById('modal-image');
+            
+            // Modal içindəki qalereya elementləri
+            const modalMainImage = document.getElementById('modal-main-image');
+            const thumbnailContainer = document.getElementById('thumbnail-container');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+
             const modalName = document.getElementById('modal-name');
             const modalDescription = document.getElementById('modal-description');
             const modalPrice = document.getElementById('modal-price');
             const modalAddToCartBtn = document.getElementById('modal-add-to-cart-btn');
-            const modalDeleteBtn = document.getElementById('modal-delete-btn'); // Yeni silmə düyməsi
+            const modalDeleteBtn = document.getElementById('modal-delete-btn'); 
             const messageBoxOverlay = document.getElementById('message-box-overlay');
             const messageBoxText = document.getElementById('message-box-text');
             const messageBoxCloseButton = document.getElementById('message-box-close-button');
@@ -482,8 +663,12 @@
             const submitPasswordBtn = document.getElementById('submit-password-btn');
             const passwordError = document.getElementById('password-error');
             const secretContent = document.getElementById('secret-content');
+            
+            // Çoxsaylı şəkil yükləmə elementləri
             const fileInput = document.getElementById('fileInput');
-            const previewImage = document.getElementById('previewImage');
+            const previewContainer = document.getElementById('preview-container');
+            const noPreviewText = document.getElementById('no-preview-text');
+
             const uploadForm = document.getElementById('product-upload-form');
             const productNameInput = document.getElementById('product-name');
             const productDescriptionInput = document.getElementById('product-description');
@@ -495,11 +680,112 @@
             const confirmYesButton = document.getElementById('confirm-yes-button');
             const confirmNoButton = document.getElementById('confirm-no-button');
 
+            // Endirim Modalı elementləri
+            const productDiscountSection = document.getElementById('product-discount-section');
+            const productDiscountButtons = productDiscountSection.querySelectorAll('.discount-option-btn-product');
+
+            // Yeni günlük ziyaretçi sayacı elementi
+            const dailyVisitorCountSpan = document.getElementById('daily-visitor-count');
+            const dailyVisitorInfoDiv = document.getElementById('daily-visitor-info');
+            
+            // Yeni Taymer elementləri
+            const countdownTimerDisplay = document.getElementById('countdown-timer-display');
+            const timerMinutes = document.getElementById('timer-minutes');
+            const timerSeconds = document.getElementById('timer-seconds');
+            let countdownInterval = null;
+
+
             // Global dəyişənlər
-            const cart = new Map();
+            let cart = new Map();
             const correctPassword = "1975"; // Gizli şifrə
             let products = [];
             let secretMode = false; // Gizli idarəetmə rejiminin vəziyyəti
+            let currentImageIndex = 0;
+            let currentProductImages = [];
+            let currentProductIdForDiscount = null; // Cari endirim üçün seçilmiş məhsulun ID-si
+            let dailyVisitorCounterRef = null; // Günlük ziyaretçi sayacı dinləyicisi üçün
+
+            // === FIREBASE İNİTİLİZAİSYA VƏ GÜNLÜK ZİYARƏTÇİ SAYACI ===
+            let app, db, auth;
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const firebaseConfig = JSON.parse(__firebase_config);
+            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+            async function initFirebase() {
+                try {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                    
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    console.log("Firebase ugurla basladildi.");
+                } catch (error) {
+                    console.error("Firebase ugursuz basladildi:", error);
+                }
+            }
+
+            async function setupDailyVisitorCounter() {
+                try {
+                    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+                    const visitorCounterPath = `artifacts/${appId}/public/data/daily_visitors/${today}`;
+                    const visitorCounterDocRef = doc(db, visitorCounterPath);
+
+                    const visitorCountDoc = await getDoc(visitorCounterDocRef);
+
+                    if (visitorCountDoc.exists()) {
+                        await updateDoc(visitorCounterDocRef, {
+                            count: increment(1)
+                        });
+                    } else {
+                        await setDoc(visitorCounterDocRef, {
+                            count: 1
+                        });
+                    }
+                    
+                    if (dailyVisitorCounterRef) {
+                        dailyVisitorCounterRef(); // Önceki dinleyiciyi durdur
+                    }
+                    dailyVisitorCounterRef = onSnapshot(visitorCounterDocRef, (doc) => {
+                        if (doc.exists()) {
+                            const count = doc.data().count;
+                            dailyVisitorCountSpan.textContent = count;
+                        } else {
+                            dailyVisitorCountSpan.textContent = '0';
+                        }
+                    });
+
+                } catch (error) {
+                    console.error("Günlük ziyaretçi sayacı başlatılırken bir hata oluştu:", error);
+                    dailyVisitorCountSpan.textContent = "Hata!";
+                }
+            }
+            
+            async function logPageVisit() {
+                try {
+                    const today = new Date().toISOString().slice(0, 10);
+                    const visitorCounterDocRef = doc(db, `artifacts/${appId}/public/data/daily_visitors/${today}`);
+
+                    const visitorCountDoc = await getDoc(visitorCounterDocRef);
+                    if (visitorCountDoc.exists()) {
+                        await updateDoc(visitorCounterDocRef, {
+                            count: increment(1)
+                        });
+                    } else {
+                        await setDoc(visitorCounterDocRef, {
+                            count: 1
+                        });
+                    }
+                } catch (error) {
+                    console.error("Ziyaretçi girişi kaydedilirken bir hata oluştu:", error);
+                }
+            }
+
+            // === FIREBASE İNİTİLİZAİSYA VƏ GÜNLÜK ZİYARƏTÇİ SAYACI BİTİŞ ===
+
 
             // Məhsulları Local Storage-dan yükləyir
             function loadProducts() {
@@ -509,6 +795,8 @@
                 } else {
                     products = [];
                 }
+                // Hər yükləmədə endirim müddətini yoxla
+                checkDiscountExpiry();
             }
 
             // Məhsulları Local Storage-a yadda saxlayır
@@ -530,19 +818,36 @@
                         const categoryString = product.categories.join(' ');
                         productCard.dataset.id = product.id;
                         productCard.dataset.category = categoryString;
+                        // Məhsul kartı üçün ilk şəkili istifadə edirik
+                        productCard.dataset.image = product.images[0]; 
                         productCard.dataset.name = product.name;
                         productCard.dataset.price = product.price;
-                        productCard.dataset.image = product.image;
+                        productCard.dataset.originalPrice = product.originalPrice;
                         productCard.dataset.description = product.description;
+                        productCard.dataset.images = JSON.stringify(product.images);
+                        productCard.dataset.discountEndTime = product.discountEndTime || null;
 
+                        const isDiscounted = product.price < product.originalPrice;
+                        const discountPercentage = isDiscounted ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
+                        
                         productCard.innerHTML = `
-                            <img src="${product.image}" alt="${product.name}" class="w-full h-64 object-cover">
+                            ${isDiscounted ? `<span class="discount-badge">-${discountPercentage}%</span>` : ''}
+                            <img src="${product.images[0]}" alt="${product.name}" class="w-full h-64 object-cover">
                             <div class="p-6">
                                 <h3 class="text-xl font-semibold text-blue-800 mb-2">${product.name}</h3>
                                 <p class="text-gray-600 mb-4">${product.description.substring(0, 50)}...</p>
                                 <div class="flex justify-between items-center">
-                                    <span class="text-2xl font-bold text-violet-500">${product.price} AZN</span>
-                                    <button class="add-to-cart-btn bg-violet-500 text-white py-2 px-6 rounded-full font-medium hover:bg-violet-600 transition-colors duration-300">Səbətə At</button>
+                                    <div>
+                                        ${isDiscounted ? `<span class="original-price">${product.originalPrice.toFixed(2)} AZN</span>` : ''}
+                                        <span class="text-2xl font-bold text-violet-500">${product.price.toFixed(2)} AZN</span>
+                                    </div>
+                                    <button class="add-to-cart-btn bg-violet-500 text-white py-2 px-6 rounded-full font-medium hover:bg-violet-600 transition-colors duration-300"
+                                            data-id="${product.id}"
+                                            data-name="${product.name}"
+                                            data-price="${product.price}"
+                                            data-image="${product.images[0]}">
+                                        Səbətə At
+                                    </button>
                                 </div>
                             </div>
                         `;
@@ -551,26 +856,27 @@
                 }
             }
             
-            // Gizli rejimdə kolleksiya filter düymələrini yeniləyir
             function updateFilterButtons() {
-                // Əvvəlki "Sil" düymələrini təmizlə
-                document.querySelectorAll('.delete-collection-btn').forEach(btn => btn.remove());
-
-                // Bütün filter düymələrini gətir
-                const filterButtons = document.querySelectorAll('.filter-button');
-                filterButtons.forEach(button => {
-                    const filter = button.dataset.filter;
-                    const wrapper = document.getElementById(`filter-wrapper-${filter}`);
-                    
-                    // Aktiv düyməyə və gizli rejimə görə "Sil" düyməsi əlavə et
-                    if (secretMode && button.classList.contains('active') && filter !== 'all') {
-                        const deleteBtn = document.createElement('button');
-                        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-                        deleteBtn.className = 'delete-collection-btn text-white bg-red-500 p-2 rounded-full hover:bg-red-600 transition-colors duration-300';
-                        deleteBtn.dataset.filter = filter;
-                        wrapper.appendChild(deleteBtn);
-                    }
-                });
+                // Əvvəlki "Sil" və "Endirim" düymələrini təmizlə
+                document.querySelectorAll('.delete-collection-btn, .discount-collection-btn').forEach(btn => btn.remove());
+                
+                // Aktiv düyməyə və gizli rejimə görə "Sil" düymələri əlavə et
+                if (secretMode) {
+                    const filterButtons = document.querySelectorAll('.filter-button');
+                    filterButtons.forEach(button => {
+                        const filter = button.dataset.filter;
+                        const wrapper = document.getElementById(`filter-wrapper-${filter}`);
+                        
+                        if (button.classList.contains('active') && filter !== 'all') {
+                            // Sil düyməsi
+                            const deleteBtn = document.createElement('button');
+                            deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Sil';
+                            deleteBtn.className = 'delete-collection-btn text-white bg-red-500 p-2 rounded-full hover:bg-red-600 transition-colors duration-300 mt-2';
+                            deleteBtn.dataset.filter = filter;
+                            wrapper.appendChild(deleteBtn);
+                        }
+                    });
+                }
             }
 
             // Səbət sidebar-ı açır
@@ -585,26 +891,69 @@
                 cartOverlay.style.display = 'none';
             }
 
+            // Şəkil qalereyasını yeniləyir
+            function updateGallery() {
+                modalMainImage.src = currentProductImages[currentImageIndex];
+
+                thumbnailContainer.innerHTML = '';
+                currentProductImages.forEach((image, index) => {
+                    const thumbnail = document.createElement('img');
+                    thumbnail.src = image;
+                    thumbnail.alt = `Thumbnail ${index + 1}`;
+                    thumbnail.className = `thumbnail ${index === currentImageIndex ? 'active' : ''}`;
+                    thumbnail.addEventListener('click', () => {
+                        currentImageIndex = index;
+                        updateGallery();
+                    });
+                    thumbnailContainer.appendChild(thumbnail);
+                });
+            }
+
             // Məhsul detalları modalını açır
             function openProductDetailModal(productData) {
-                modalImage.src = productData.image;
-                modalImage.alt = productData.name;
+                // Şəkilləri global dəyişkənə yadda saxlayırıq
+                currentProductImages = productData.images;
+                currentImageIndex = 0;
+                updateGallery(); // Qalereyanı ilk şəkil ilə yeniləyirik
+                currentProductIdForDiscount = productData.id;
+
                 modalName.textContent = productData.name;
                 modalDescription.textContent = productData.description;
-                modalPrice.textContent = `${productData.price} AZN`;
                 
+                const isDiscounted = productData.price < productData.originalPrice;
+                if (isDiscounted) {
+                     modalPrice.innerHTML = `<span class="original-price">${productData.originalPrice.toFixed(2)} AZN</span> ${productData.price.toFixed(2)} AZN`;
+                     countdownTimerDisplay.classList.remove('hidden');
+                     startCountdown(productData.discountEndTime, productData.id); // Taymeri başlat
+                } else {
+                     modalPrice.textContent = `${productData.price.toFixed(2)} AZN`;
+                     countdownTimerDisplay.classList.add('hidden');
+                     stopCountdown(); // Taymeri dayandır
+                }
+
                 modalAddToCartBtn.dataset.id = productData.id;
                 modalAddToCartBtn.dataset.name = productData.name;
                 modalAddToCartBtn.dataset.price = productData.price;
-                modalAddToCartBtn.dataset.image = productData.image;
+                modalAddToCartBtn.dataset.image = productData.images[0]; // Səbət üçün birinci şəkili istifadə edirik
 
-                // Gizli rejimdə silmə düyməsini göstərir, əks halda gizlədir
+                // Gizli rejimdə silmə və endirim bölməsini göstərir, əks halda gizlədir
                 if (secretMode) {
                     modalDeleteBtn.classList.remove('hidden');
                     modalDeleteBtn.dataset.id = productData.id;
                     modalDeleteBtn.dataset.name = productData.name;
+                    productDiscountSection.classList.remove('hidden');
                 } else {
                     modalDeleteBtn.classList.add('hidden');
+                    productDiscountSection.classList.add('hidden');
+                }
+
+                // Navbar düymələrini göstər
+                if (currentProductImages.length > 1) {
+                    prevBtn.style.display = 'block';
+                    nextBtn.style.display = 'block';
+                } else {
+                    prevBtn.style.display = 'none';
+                    nextBtn.style.display = 'none';
                 }
 
                 productDetailModalOverlay.style.display = 'flex';
@@ -614,6 +963,7 @@
             // Məhsul detalları modalını bağlayır
             function closeProductDetailModal() {
                 productDetailModalOverlay.style.display = 'none';
+                stopCountdown(); // Modalı bağlayanda taymeri dayandır
             }
 
             // Məlumat mesaj qutusunu göstərir
@@ -663,7 +1013,7 @@
                                 <img src="${item.image}" alt="${item.name}" class="w-16 h-16 rounded-md object-cover mr-4">
                                 <div>
                                     <h4 class="font-semibold text-blue-800">${item.name}</h4>
-                                    <p class="text-gray-500">${item.price} AZN</p>
+                                    <p class="text-gray-500">${item.price.toFixed(2)} AZN</p>
                                 </div>
                             </div>
                             <div class="flex items-center">
@@ -704,7 +1054,132 @@
                 updateCartDisplay();
                 showMessageBox(`"${productName}" səbətdən silindi.`);
             }
+            
+            // Fərdi məhsula endirim tətbiq edən funksiya
+            function applyProductDiscount(productId, discountPercentage) {
+                 const product = products.find(p => p.id === productId);
+                 if (product) {
+                    if (discountPercentage === 0) {
+                        product.price = product.originalPrice;
+                        product.discountEndTime = null; // Taymeri sıfırla
+                        showMessageBox(`${product.name} məhsulundakı endirim sıfırlandı.`);
+                    } else {
+                        const originalPrice = product.originalPrice || product.price;
+                        product.price = originalPrice - (originalPrice * (discountPercentage / 100));
+                        product.originalPrice = originalPrice;
+                        // Endirim üçün 2 saat vaxt ver
+                        const endTime = new Date();
+                        endTime.setHours(endTime.getHours() + 2);
+                        product.discountEndTime = endTime.toISOString();
+                        
+                        showMessageBox(`${product.name} məhsuluna %${discountPercentage} endirim tətbiq edildi! Taymer başladı.`);
+                    }
+                    saveProducts();
+                    renderProducts();
 
+                    // Modalın daxilindəki qiyməti yenilə
+                    const isDiscounted = product.price < product.originalPrice;
+                    if (isDiscounted) {
+                        modalPrice.innerHTML = `<span class="original-price">${product.originalPrice.toFixed(2)} AZN</span> ${product.price.toFixed(2)} AZN`;
+                        countdownTimerDisplay.classList.remove('hidden');
+                        startCountdown(product.discountEndTime, product.id);
+                    } else {
+                        modalPrice.textContent = `${product.price.toFixed(2)} AZN`;
+                        countdownTimerDisplay.classList.add('hidden');
+                        stopCountdown();
+                    }
+                 }
+            }
+
+            // Endirim taymerini idarə edən funksiya
+            function startCountdown(endTime, productId) {
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                }
+                
+                const endDate = new Date(endTime).getTime();
+
+                countdownInterval = setInterval(() => {
+                    const now = new Date().getTime();
+                    const distance = endDate - now;
+                    
+                    if (distance < 0) {
+                        clearInterval(countdownInterval);
+                        const product = products.find(p => p.id === productId);
+                        if (product) {
+                            product.price = product.originalPrice;
+                            product.discountEndTime = null;
+                            saveProducts();
+                            renderProducts();
+                        }
+                        
+                        countdownTimerDisplay.classList.add('hidden');
+                        modalPrice.textContent = `${product.originalPrice.toFixed(2)} AZN`;
+                        return;
+                    }
+                    
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                    
+                    timerMinutes.textContent = String(minutes).padStart(2, '0');
+                    timerSeconds.textContent = String(seconds).padStart(2, '0');
+                    
+                }, 1000);
+            }
+            
+            // Taymeri dayandirir
+            function stopCountdown() {
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                }
+            }
+
+            // Yükləmə zamanı bitmiş endirimləri yoxla
+            function checkDiscountExpiry() {
+                const now = new Date().getTime();
+                products = products.map(product => {
+                    if (product.discountEndTime) {
+                        const endTime = new Date(product.discountEndTime).getTime();
+                        if (now > endTime) {
+                            // Endirim bitib, qiyməti sıfırla
+                            product.price = product.originalPrice;
+                            product.discountEndTime = null;
+                        }
+                    }
+                    return product;
+                });
+                saveProducts();
+            }
+
+
+            // Sifarişi tamamla düyməsi
+            checkoutButton.addEventListener('click', () => {
+                if (cart.size > 0) {
+                    let orderMessage = "Salam, sifariş vermək istəyirəm:\n\n";
+                    let total = 0;
+
+                    cart.forEach(item => {
+                        orderMessage += `- ${item.name} (${item.price.toFixed(2)} AZN)\n`;
+                        total += parseFloat(item.price);
+                    });
+
+                    orderMessage += `\nÜmumi qiymət: ${total.toFixed(2)} AZN`;
+
+                    const whatsappNumber = "994504495677"; // +994 50 449 56 77
+                    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(orderMessage)}`;
+
+                    window.open(whatsappUrl, '_blank');
+
+                    // Sifariş verildikdən sonra səbəti təmizlə
+                    cart.clear();
+                    updateCartDisplay();
+                    closeCart();
+                } else {
+                    showMessageBox('Sifarişi tamamlamaq üçün səbətiniz boş olmamalıdır.');
+                }
+            });
+            
             // Hadisə dinləyiciləri
             mobileMenuButton.addEventListener('click', () => {
                 mobileMenu.classList.toggle('hidden');
@@ -724,8 +1199,18 @@
                     closeMessageBox();
                 }
             });
+
+            // Qalereya naviqasiya düymələri
+            prevBtn.addEventListener('click', () => {
+                currentImageIndex = (currentImageIndex - 1 + currentProductImages.length) % currentProductImages.length;
+                updateGallery();
+            });
+            nextBtn.addEventListener('click', () => {
+                currentImageIndex = (currentImageIndex + 1) % currentProductImages.length;
+                updateGallery();
+            });
             
-            // Filter düymələri üçün ümumi dinləyici
+            // Filtr düymələri üçün ümumi dinləyici
             filterButtonsContainer.addEventListener('click', (e) => {
                 const button = e.target.closest('.filter-button');
                 const deleteButton = e.target.closest('.delete-collection-btn');
@@ -740,7 +1225,6 @@
                     });
                     renderProducts(filteredProducts);
                     
-                    // Gizli rejimdəyiksə, "Sil" düyməsini yenilə
                     if (secretMode) {
                         updateFilterButtons();
                     }
@@ -758,6 +1242,17 @@
                     });
                 }
             });
+            
+            // Məhsul detal modalı içindəki endirim düymələri üçün dinləyici
+            productDiscountSection.addEventListener('click', (e) => {
+                const discountBtn = e.target.closest('.discount-option-btn-product');
+                if (discountBtn) {
+                    const discount = parseInt(discountBtn.dataset.discount);
+                    if (currentProductIdForDiscount !== null) {
+                        applyProductDiscount(currentProductIdForDiscount, discount);
+                    }
+                }
+            });
 
             // Məhsul kartları üçün dinləyici (event delegation)
             productList.addEventListener('click', (e) => {
@@ -765,26 +1260,28 @@
                 const addToCartBtn = e.target.closest('.add-to-cart-btn');
                 
                 if (addToCartBtn) {
-                    const productName = productCard.dataset.name;
-                    const productPrice = productCard.dataset.price;
-                    const productImage = productCard.dataset.image;
+                    const productName = addToCartBtn.dataset.name;
+                    const productPrice = parseFloat(addToCartBtn.dataset.price);
+                    const productImage = addToCartBtn.dataset.image;
                     addToCart(productName, productPrice, productImage);
                 } else if (productCard) {
                     const productData = {
-                        id: productCard.dataset.id,
+                        id: parseInt(productCard.dataset.id),
                         name: productCard.dataset.name,
-                        price: productCard.dataset.price,
-                        image: productCard.dataset.image,
-                        description: productCard.dataset.description
+                        price: parseFloat(productCard.dataset.price),
+                        images: JSON.parse(productCard.dataset.images),
+                        description: productCard.dataset.description,
+                        originalPrice: productCard.dataset.originalPrice ? parseFloat(productCard.dataset.originalPrice) : parseFloat(productCard.dataset.price),
+                        discountEndTime: productCard.dataset.discountEndTime || null
                     };
                     openProductDetailModal(productData);
                 }
             });
 
-            // "Add to Cart" düyməsi
+            // "Səbətə Əlavə Et" düyməsi
             modalAddToCartBtn.addEventListener('click', () => {
                 const productName = modalAddToCartBtn.dataset.name;
-                const productPrice = modalAddToCartBtn.dataset.price;
+                const productPrice = parseFloat(modalAddToCartBtn.dataset.price);
                 const productImage = modalAddToCartBtn.dataset.image;
                 addToCart(productName, productPrice, productImage);
                 closeProductDetailModal();
@@ -813,32 +1310,6 @@
                 }
             });
 
-            // Sifarişi tamamla düyməsi
-            checkoutButton.addEventListener('click', () => {
-                if (cart.size > 0) {
-                    let orderMessage = "Salam, sifariş vermək istəyirəm:\n\n";
-                    let total = 0;
-
-                    cart.forEach(item => {
-                        orderMessage += `- ${item.name} (${item.price} AZN)\n`;
-                        total += parseFloat(item.price);
-                    });
-
-                    orderMessage += `\nÜmumi qiymət: ${total.toFixed(2)} AZN`;
-
-                    const whatsappNumber = "994504495677"; // +994 50 449 56 77
-                    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(orderMessage)}`;
-
-                    window.open(whatsappUrl, '_blank');
-
-                    // Sifariş verildikdən sonra səbəti təmizlə
-                    cart.clear();
-                    updateCartDisplay();
-                    closeCart();
-                } else {
-                    showMessageBox('Sifarişi tamamlamaq üçün səbətiniz boş olmamalıdır.');
-                }
-            });
 
             // Özəl giriş linkinə klik
             privateAccessLink.addEventListener('click', (e) => {
@@ -861,7 +1332,9 @@
                     passwordModalOverlay.style.display = 'none';
                     secretContent.style.display = 'block';
                     secretMode = true; // Gizli rejimi aktivləşdir
+                    document.body.classList.add('secret-mode-background');
                     updateFilterButtons(); // "Sil" düymələrini göstər
+                    setupDailyVisitorCounter(); // Günlük ziyaretçi sayacını başlat
                     showMessageBox('Şifrə düzgündür! Məhsul idarəetmə bölməsi açıldı.');
                 } else {
                     passwordError.style.display = 'block';
@@ -875,42 +1348,62 @@
                 }
             });
             
-            // Şəkil yükləmə
+            // Çoxsaylı şəkil yükləmə
             fileInput.addEventListener('change', function(event) {
-                const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        previewImage.src = e.target.result;
-                        previewImage.alt = file.name;
-                    };
-                    reader.readAsDataURL(file);
+                previewContainer.innerHTML = ''; // Əvvəlki önizləmələri təmizlə
+                const files = event.target.files;
+                if (files.length > 0) {
+                    noPreviewText.style.display = 'none';
+                    for (const file of files) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.alt = file.name;
+                            img.className = 'w-24 h-24 object-cover rounded-md border border-gray-300';
+                            previewContainer.appendChild(img);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                } else {
+                    noPreviewText.style.display = 'flex';
                 }
             });
 
             // Yeni məhsul əlavə etmək üçün form
-            uploadForm.addEventListener('submit', (e) => {
+            uploadForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 
                 const name = productNameInput.value.trim();
                 const description = productDescriptionInput.value.trim();
                 const price = parseFloat(productPriceInput.value);
                 const category = productCategorySelect.value;
-                const file = fileInput.files[0];
-                const image = previewImage.src;
+                const files = fileInput.files;
 
-                if (!name || !description || isNaN(price) || price <= 0 || !file || image.includes('placehold.co')) {
-                    showMessageBox('Zəhmət olmasa, bütün sahələri doldurun və bir şəkil seçin.');
+                if (!name || !description || isNaN(price) || price <= 0 || files.length === 0) {
+                    showMessageBox('Zəhmət olmasa, bütün sahələri doldurun və ən azı bir şəkil seçin.');
                     return;
                 }
+                
+                const images = await Promise.all(
+                    Array.from(files).map(file => {
+                        return new Promise(resolve => {
+                            const reader = new FileReader();
+                            reader.onload = e => resolve(e.target.result);
+                            reader.readAsDataURL(file);
+                        });
+                    })
+                );
 
                 const newProduct = {
                     id: Date.now(),
                     name: name,
                     description: description,
                     price: price,
-                    image: image,
-                    categories: [category]
+                    originalPrice: price, // Orijinal qiyməti yeni məhsula əlavə et
+                    images: images,
+                    categories: [category],
+                    discountEndTime: null // Yeni məhsulda endirim vaxtı yoxdur
                 };
 
                 products.push(newProduct);
@@ -919,7 +1412,7 @@
                 renderProducts();
                 
                 uploadForm.reset();
-                previewImage.src = "https://placehold.co/400x320/e5e7eb/6b7280?text=Şəkil+yükləyin";
+                previewContainer.innerHTML = '<p id="no-preview-text" class="text-gray-500 italic flex items-center justify-center w-full">Şəkillər burda görünəcək.</p>';
                 
                 showMessageBox('Yeni məhsul uğurla əlavə edildi!');
             });
@@ -933,11 +1426,16 @@
                     showMessageBox('Bütün məhsullar silindi.');
                 });
             });
+            
+            // Səhifə yüklənəndə məhsulları yüklə, render et və Firebase-i başlat
+            window.onload = async () => {
+                await initFirebase(); // Firebase'i başlat
+                loadProducts();
+                renderProducts();
+                updateCartDisplay();
+                logPageVisit(); // Ana səhifəyə girişi qeyd et
+            };
 
-            // Səhifə yüklənəndə məhsulları yüklə və render et
-            loadProducts();
-            renderProducts();
-            updateCartDisplay();
         });
     </script>
 </body>
