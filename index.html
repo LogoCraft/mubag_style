@@ -1153,17 +1153,4 @@
             const month = String(today.getMonth() + 1).padStart(2, '0');
             const day = String(today.getDate()).padStart(2, '0');
             const todayDocId = `${year}-${month}-${day}`;
-            const visitorDocRef = doc(db, `artifacts/${appId}/public/data/visitorCounts/${todayDocId}`);
-
-            onSnapshot(visitorDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    dailyVisitorCountSpan.textContent = data.count || 0;
-                } else {
-                    dailyVisitorCountSpan.textContent = 0;
-                }
-            });
-        });
-    </script>
-</body>
-</html>
+            const visitorDocRef = doc(db, `
