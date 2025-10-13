@@ -3,1154 +3,450 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mubag Style | Zərif və Stil Sahibi</title>
-
-    <!-- Tailwind CSS-i yükləyirik -->
+    <title>Masroxx Layihə İdarəetmə Paneli</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Google Fonts-dan Inter şriftini yükləyirik -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- Font Awesome ikonları yükləyirik (səbət üçün) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    
     <style>
-        /* Ümumi bədən stili */
         body {
             font-family: 'Inter', sans-serif;
-            overflow-x: hidden;
-            background-color: #f7f3e9; /* Krem tonu */
-            color: #1e3a8a; /* Əsas mətn rəngi - tünd göy */
-            transition: background-color 0.5s ease, color 0.5s ease;
+            background: #1a202c; /* Tünd fon rəngi */
+            color: #e2e8f0; /* Açıq mətn rəngi */
         }
-
-        /* Qəhrəman bölməsi animasiyası */
-        @keyframes fadeInMoveUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* Custom scrollbar for task list */
+        #taskListContainer::-webkit-scrollbar {
+            width: 6px;
         }
-
-        .animate-fade-in-up {
-            animation: fadeInMoveUp 1s ease-out forwards;
+        #taskListContainer::-webkit-scrollbar-thumb {
+            background-color: #374151;
+            border-radius: 3px;
         }
-
-        .delay-200 { animation-delay: 0.2s; }
-
-        /* Filtr düyməsi stilləri */
-        .filter-button {
-            transition: all 0.3s ease-in-out;
-            @apply bg-gray-200 text-gray-800 py-2 px-6 rounded-full font-medium hover:bg-violet-400 hover:text-white;
-        }
-        .filter-button.active {
-            @apply bg-violet-500 text-white;
-        }
-
-        /* Məhsul kartı stilləri */
-        .product-card {
-            cursor: pointer;
-            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-            position: relative; /* Endirim işarəsi üçün */
-        }
-        .product-card:hover {
-            transform: scale(1.03);
-            box-shadow: 0 15px 30px rgba(124, 58, 237, 0.2); /* Bənövşəyi kölgə */
-        }
-        
-        /* Endirim işarəsi */
-        .discount-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: #ef4444; /* Qırmızı */
-            color: white;
-            padding: 4px 8px;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            font-weight: bold;
-        }
-
-        /* Məhsulun üzərindəki qiymət stili */
-        .original-price {
-            text-decoration: line-through;
-            color: #9ca3af; /* Boz rəng */
-            font-size: 0.875rem;
-            margin-right: 8px;
-        }
-
-
-        /* Mesaj qutusu stilləri */
-        .message-box-overlay, .product-detail-modal-overlay, .password-modal-overlay, .confirmation-modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .message-box, .password-modal {
-            background-color: #ffffff;
-            color: #1e3a8a; /* Tünd göy mətn */
-            padding: 2rem;
-            border-radius: 1rem;
-            border: 1px solid #c4b5fd; /* Açıq bənövşəyi haşiyə */
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            animation: fadeInMoveUp 0.3s ease-out;
-        }
-
-        /* Səbət kənar çubuğu stilləri */
-        .cart-sidebar {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: 100%;
-            max-width: 400px;
-            height: 100%;
-            background-color: #ffffff;
-            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
-            transform: translateX(100%);
-            transition: transform 0.4s ease-in-out;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            border-left: 1px solid #c4b5fd; /* Açıq bənövşəyi haşiyə */
-        }
-        .cart-sidebar.open {
-            transform: translateX(0);
-        }
-        .cart-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            display: none;
-        }
-
-        /* Detal modal stilləri */
-        .product-detail-modal {
-            background-color: #ffffff;
-            color: #1e3a8a; /* Tünd göy mətn */
-            border-radius: 1.5rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            max-width: 900px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            border: 1px solid #c4b5fd; /* Açıq bənövşəyi haşiyə */
-            position: relative;
-            animation: fadeInMoveUp 0.3s ease-out;
-        }
-
-        /* Xüsusi kaydırma çubuğu stilləri */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #e5e5e5;
-            border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #c4b5fd; /* Açıq bənövşəyi kaydırma çubuğu */
-            border-radius: 10px;
-            border: 2px solid #e5e5e5;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #a78bfa;
-        }
-        
-        .checkout-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        /* Gizli bölmə stilləri */
-        #secret-content {
-            display: none;
-        }
-        
-        /* Yeni şəkil yükləmə bölməsi stilləri */
-        .upload-container {
-            min-height: 400px;
-        }
-        .preview-image {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-        
-        .no-products-message {
-            text-align: center;
-            font-size: 1.5rem;
-            color: #6b7280;
-            margin-top: 5rem;
-        }
-        
-        /* Şəkil qalereyası stilləri */
-        .gallery-image {
-            width: 100%;
-            height: 400px;
-            object-fit: cover;
-            border-radius: 1rem;
-        }
-        .thumbnail-container {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-        .thumbnail {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 0.5rem;
-            border: 2px solid transparent;
-            cursor: pointer;
-            transition: border-color 0.3s ease-in-out;
-        }
-        .thumbnail.active {
-            border-color: #8b5cf6; /* Bənövşəyi haşiyə */
-        }
-        .gallery-nav-btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background-color: rgba(0,0,0,0.5);
-            color: white;
-            padding: 0.5rem;
-            border-radius: 50%;
-            transition: background-color 0.3s;
-        }
-        .gallery-nav-btn:hover {
-            background-color: rgba(0,0,0,0.8);
-        }
-        .gallery-nav-btn.prev {
-            left: 1rem;
-        }
-        .gallery-nav-btn.next {
-            right: 1rem;
-        }
-
-        /* === Gizli Bölmə Stilləri === */
-        
-        .secret-mode-background {
-            background: linear-gradient(135deg, #2c3e50, #34495e, #1c2b36, #415a77);
-            background-size: 400% 400%;
-            animation: moveBackground 30s ease infinite; /* Yavaş ve sonsuz animasyon */
-            transition: background-color 0.5s ease;
-            color: #e0e0e0;
-        }
-        @keyframes moveBackground {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        #secret-content .p-10 {
-            background-color: rgba(255, 255, 255, 0.05); /* Yarı saydam beyaz */
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .visitor-counter {
-            background-color: rgba(255, 255, 255, 0.05);
-            border-radius: 9999px; /* Tailwind'in rounded-full karşılığı */
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #e0e0e0;
-        }
-
-        /* Yeni endirim düymələri stili */
-        .discount-option-btn-product {
-            transition: all 0.2s ease-in-out;
-            @apply bg-gray-200 text-gray-800 py-2 px-4 rounded-full font-medium hover:bg-green-500 hover:text-white;
-        }
-        
-        /* Şəkil yüklənərkən göstəriləcək loader stili */
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-radius: 50%;
-            border-top: 4px solid #8b5cf6;
-            width: 40px;
-            height: 40px;
-            -webkit-animation: spin 1s linear infinite;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-        @-webkit-keyframes spin {
-            0% { -webkit-transform: rotate(0deg); }
-            100% { -webkit-transform: rotate(360deg); }
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        #taskListContainer::-webkit-scrollbar-track {
+            background-color: #1f2937;
         }
     </style>
 </head>
-<body class="bg-[#f7f3e9] text-blue-800 antialiased">
+<body class="flex items-start md:items-center justify-center min-h-screen p-4 md:p-8">
 
-    <!-- Naviqasiya çubuğu -->
-    <nav class="p-6 md:p-8 flex justify-between items-center bg-white border-b border-gray-200">
-        <a href="#" class="text-2xl md:text-3xl font-bold text-violet-500 tracking-wider">MUBAG STYLE</a>
-        <div class="hidden md:flex space-x-8 text-lg font-medium">
-            <a href="#" class="text-blue-800 hover:text-violet-500 transition-colors duration-300">Ana Səhifə</a>
-            <a href="#products" class="text-blue-800 hover:text-violet-500 transition-colors duration-300">Kolleksiya</a>
-            <a href="#about-us" class="text-blue-800 hover:text-violet-500 transition-colors duration-300">Haqqımızda</a>
-            <a href="#contact-us" class="text-blue-800 hover:text-violet-500 transition-colors duration-300">Əlaqə</a>
-        </div>
-        <div class="flex items-center space-x-4">
-            <button id="cart-button" class="text-violet-500 relative focus:outline-none">
-                <i class="fas fa-shopping-cart fa-lg"></i>
-                <span id="cart-count" class="absolute -top-2 -right-2 bg-violet-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">0</span>
+    <!-- Əsas Kapsayıcı (Container) -->
+    <div id="appContainer" class="w-full max-w-4xl bg-gray-800 rounded-2xl shadow-2xl overflow-hidden min-h-[70vh]">
+
+        <!-- Başlıq -->
+        <header class="bg-gray-700 text-center py-6 px-4 flex justify-between items-center">
+            <h1 id="pageTitle" class="text-2xl md:text-3xl font-bold text-white transition-all duration-300">Xoş gəlmisiniz!</h1>
+            <button id="logoutBtn" onclick="logout()" 
+                    class="py-2 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-300 text-sm hidden">
+                Çıxış
             </button>
-            <button id="mobile-menu-button" class="md:hidden text-violet-500 focus:outline-none">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
-            </button>
-        </div>
-    </nav>
+        </header>
 
-    <!-- Mobil menyu -->
-    <div id="mobile-menu" class="hidden md:hidden bg-white text-center border-b border-gray-200">
-        <a href="#" class="block py-4 text-blue-800 hover:bg-gray-100 transition-colors duration-300">Ana Səhifə</a>
-        <a href="#products" class="block py-4 text-blue-800 hover:bg-gray-100 transition-colors duration-300">Kolleksiya</a>
-        <a href="#about-us" class="block py-4 text-blue-800 hover:bg-gray-100 transition-colors duration-300">Haqqımızda</a>
-        <a href="#contact-us" class="block py-4 text-blue-800 hover:bg-gray-100 transition-colors duration-300">Əlaqə</a>
-    </div>
+        <!-- Forma Bölməsi (Login/Registration) -->
+        <main id="authSection" class="p-4 md:p-8 space-y-6 transition-all duration-500 ease-in-out w-full md:w-1/2 mx-auto">
+            <h2 id="formTitle" class="text-2xl font-semibold text-center text-gray-100">Giriş</h2>
 
-    <!-- Qəhrəman bölməsi -->
-    <header class="relative bg-white h-[60vh] md:h-[80vh] flex items-center justify-center text-center px-4 overflow-hidden">
-        <div class="absolute inset-0">
-            <!-- Arxa plan şəkili -->
-            <img src="https://images.unsplash.com/photo-1543324671-155452f1e944?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Arxa plan şəkili" class="w-full h-full object-cover opacity-20">
-        </div>
-        <div class="relative z-10 p-6 md:p-12 rounded-xl bg-white bg-opacity-80 backdrop-filter backdrop-blur-sm border border-gray-300 shadow-lg">
-            <h1 class="text-4xl md:text-6xl font-extrabold text-violet-500 mb-4 animate-fade-in-up">Zəriflik və Stil Sizinlə</h1>
-            <p class="text-lg md:text-xl text-blue-700 mb-8 animate-fade-in-up delay-200">Ağ və Krem Tonlarında Ən Son Çanta Kolleksiyamızla Tanış Olun.</p>
-            <a href="#products" class="bg-violet-500 text-white font-semibold py-3 px-8 rounded-full shadow-lg hover:bg-violet-600 transition-all duration-300 transform hover:scale-105">Kolleksiyaya Bax</a>
-        </div>
-    </header>
-
-    <!-- Şifrə daxil edildikdən sonra görünən gizli bölmə -->
-    <section id="secret-content" class="relative container mx-auto px-4 my-12 transition-all duration-500 ease-in-out">
-        <div class="p-10 bg-blue-900 text-white rounded-xl shadow-2xl space-y-8">
-            <h2 class="text-3xl font-bold text-center text-white">Gizli İdarəetmə Paneli</h2>
-            
-            <!-- Yeni günlük ziyaretçi sayacı bölümü -->
-            <div id="daily-visitor-info" class="bg-violet-500 p-6 rounded-xl shadow-md text-white text-center">
-                <h3 class="text-2xl font-bold mb-2">Bugünkü Ziyarətçi Sayı:</h3>
-                <span id="daily-visitor-count" class="text-4xl font-extrabold tracking-wide">0</span>
-            </div>
-
-            <div class="bg-white p-8 rounded-2xl shadow-xl max-w-2xl mx-auto w-full text-center upload-container">
-                <form id="product-upload-form" class="space-y-6 text-gray-800 text-left">
-                    <h3 class="text-2xl font-bold text-violet-500 mb-4">Yeni Məhsul Əlavə Et</h3>
-                    <div>
-                        <label for="product-name" class="block text-sm font-medium text-gray-700">Məhsulun Adı</label>
-                        <input type="text" id="product-name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:border-violet-500 focus:ring-violet-500">
-                    </div>
-                    <div>
-                        <label for="product-description" class="block text-sm font-medium text-gray-700">Məhsul Haqqında</label>
-                        <textarea id="product-description" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:border-violet-500 focus:ring-violet-500"></textarea>
-                    </div>
-                    <div>
-                        <label for="product-price" class="block text-sm font-medium text-gray-700">Qiymət (AZN)</label>
-                        <input type="number" id="product-price" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:border-violet-500 focus:ring-violet-500">
-                    </div>
-                    <div>
-                        <label for="product-category" class="block text-sm font-medium text-gray-700">Kolleksiya Seçin</label>
-                        <select id="product-category" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:border-violet-500 focus:ring-violet-500">
-                            <option value="qadin">Qadınlar üçün</option>
-                            <option value="kisi">Kişilər üçün</option>
-                            <option value="ciyin">Çiyin Çantası</option>
-                            <option value="el">Əl Çantası</option>
-                            <option value="sport">Sport Çantası</option>
-                            <option value="seyahet">Səyahət Çantası</option>
-                            <option value="deri">Dəri Çanta</option>
-                            <option value="klassik">Klassik</option>
-                            <option value="modern">Modern</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="fileInput" class="block text-sm font-medium text-gray-700 mb-1">Şəkilləri seçin (birdən çox şəkil)</label>
-                        <input type="file" id="fileInput" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" multiple>
-                    </div>
-                    
-                    <!-- Şəkil önizləmələri üçün yeni div -->
-                    <div id="preview-container" class="w-full min-h-[100px] p-2 bg-gray-100 rounded-xl overflow-x-auto flex gap-4 border border-gray-300 shadow-inner">
-                        <p id="no-preview-text" class="text-gray-500 italic flex items-center justify-center w-full">Şəkillər burda görünəcək.</p>
-                    </div>
-                    
-                    <button type="submit" id="submit-product-btn" class="w-full bg-violet-500 text-white font-bold py-3 px-6 rounded-full hover:bg-violet-600 transition duration-300 ease-in-out transform hover:scale-105">
-                        Məhsulu Yüklə
-                    </button>
-                </form>
-
-                <div class="mt-10 pt-6 border-t border-gray-200 text-left">
-                    <h3 class="text-2xl font-bold text-violet-500 mb-4">Məhsulları Toplu İdarə Et</h3>
-                    <div class="flex flex-col space-y-4 items-center">
-                        <button type="button" id="clear-products-btn" class="w-full bg-red-500 text-white font-bold py-3 px-6 rounded-full hover:bg-red-600 transition duration-300 ease-in-out transform hover:scale-105">
-                            Bütün Məhsulları Sil
-                        </button>
-                    </div>
+            <form id="authForm" class="space-y-4">
+                <div>
+                    <label for="email" class="sr-only">Email</label>
+                    <input type="email" id="email" placeholder="Email" required
+                            class="w-full px-4 py-3 bg-gray-700 text-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-300">
                 </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Məhsullar və Filtr bölməsi -->
-    <section id="products" class="py-16 md:py-24 bg-[#f7f3e9]">
-        <div class="container mx-auto px-4 flex flex-col md:flex-row gap-8">
-            <!-- Filtr Paneli -->
-            <div class="md:w-1/4 bg-white p-6 rounded-xl border border-gray-200 h-fit">
-                <h3 class="text-2xl font-bold text-violet-500 mb-6">Kateqoriyalar</h3>
-                <div id="filter-buttons-container" class="flex flex-wrap md:flex-col gap-3">
-                    <!-- Filtr düymələri JS tərəfindən idarə olunur -->
-                    <div class="flex items-center gap-2" id="filter-wrapper-all">
-                        <button class="filter-button active" data-filter="all">Hamısı</button>
-                    </div>
-                    <div class="flex items-center gap-2" id="filter-wrapper-qadin">
-                        <button class="filter-button" data-filter="qadin">Qadınlar üçün</button>
-                    </div>
-                    <div class="flex items-center gap-2" id="filter-wrapper-kisi">
-                        <button class="filter-button" data-filter="kisi">Kişilər üçün</button>
-                    </div>
-                    <div class="flex items-center gap-2" id="filter-wrapper-ciyin">
-                        <button class="filter-button" data-filter="ciyin">Çiyin Çantası</button>
-                    </div>
-                    <div class="flex items-center gap-2" id="filter-wrapper-el">
-                        <button class="filter-button" data-filter="el">Əl Çantası</button>
-                    </div>
-                    <div class="flex items-center gap-2" id="filter-wrapper-sport">
-                        <button class="filter-button" data-filter="sport">Sport Çantası</button>
-                    </div>
-                    <div class="flex items-center gap-2" id="filter-wrapper-seyahet">
-                        <button class="filter-button" data-filter="seyahet">Səyahət Çantası</button>
-                    </div>
-                    <div class="flex items-center gap-2" id="filter-wrapper-deri">
-                        <button class="filter-button" data-filter="deri">Dəri Çanta</button>
-                    </div>
-                    <div class="flex items-center gap-2" id="filter-wrapper-klassik">
-                        <button class="filter-button" data-filter="klassik">Klassik</button>
-                    </div>
-                    <div class="flex items-center gap-2" id="filter-wrapper-modern">
-                        <button class="filter-button" data-filter="modern">Modern</button>
-                    </div>
+                <div>
+                    <label for="password" class="sr-only">Şifrə</label>
+                    <input type="password" id="password" placeholder="Şifrə" required
+                            class="w-full px-4 py-3 bg-gray-700 text-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-300">
                 </div>
-            </div>
-            
-            <!-- Məhsul siyahısı -->
-            <div class="md:w-3/4">
-                <h2 class="text-4xl md:text-5xl font-bold text-center text-violet-500 mb-12 hidden md:block">Yeni Kolleksiya</h2>
-                <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- Məhsul kartları buraya JS tərəfindən dinamik olaraq əlavə ediləcək -->
-                    <p id="no-products-message" class="no-products-message hidden">Hələ heç bir məhsul əlavə edilməyib.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Haqqımızda Bölməsi -->
-    <section id="about-us" class="py-16 md:py-24 bg-white">
-        <div class="container mx-auto px-4 text-center">
-            <h2 class="text-4xl md:text-5xl font-bold text-violet-500 mb-6">Haqqımızda</h2>
-            <p class="text-lg text-gray-700 max-w-4xl mx-auto leading-relaxed">
-                Mubag Style olaraq, zərifliyi və stili gündəlik həyatınıza daxil etmək üçün yola çıxdıq. Hər bir çantamız, yüksək keyfiyyətli materiallardan və peşəkar sənətkarlıqla hazırlanıb. Bizim üçün çanta sadəcə bir aksesuar deyil, sizin fərdi tərzinizin bir hissəsidir. Kolleksiyalarımızla hər zövqə və ehtiyaca uyğun zəriflik təqdim edirik.
-            </p>
-        </div>
-    </section>
-
-    <!-- Əlaqə Bölməsi -->
-    <section id="contact-us" class="py-16 md:py-24 bg-[#f7f3e9]">
-        <div class="container mx-auto px-4 text-center">
-            <h2 class="text-4xl md:text-5xl font-bold text-violet-500 mb-6">Əlaqə</h2>
-            <div class="max-w-xl mx-auto space-y-8 text-gray-700">
-                <div class="flex items-center justify-center space-x-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <p class="text-lg">Bakı, Azərbaycan</p>
-                </div>
-                <div class="flex items-center justify-center space-x-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.26 1.13a11.056 11.056 0 005.418 5.418l1.13-2.26a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                    <p class="text-lg">+994 50 449 56 77</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Alt yazı bölməsi -->
-    <footer class="bg-blue-900 text-white py-12 px-4">
-        <div class="container mx-auto text-center">
-            <h4 class="text-2xl font-bold mb-2">
-                Mubag Style
-            </h4>
-            <a href="#" id="private-access-link" class="text-sm text-gray-400 hover:text-gray-200 transition-colors duration-300">Özəl Giriş</a>
-            <p class="text-gray-300 mt-2">&copy; 2024 Bütün hüquqlar qorunur.</p>
-        </div>
-    </footer>
-
-    <!-- Səbət kənar çubuğu -->
-    <div id="cart-overlay" class="cart-overlay"></div>
-    <div id="cart-sidebar" class="cart-sidebar custom-scrollbar">
-        <div class="p-6 flex items-center justify-between border-b border-gray-200">
-            <h3 class="text-2xl font-bold text-violet-500">Səbət</h3>
-            <button id="close-cart-button" class="text-gray-500 hover:text-gray-800 focus:outline-none">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
-        </div>
-        <div id="cart-items" class="p-6 flex-grow overflow-y-auto">
-            <!-- Səbət məhsulları buraya əlavə ediləcək -->
-            <p id="empty-cart-message" class="text-center text-gray-500 italic">Səbətiniz boşdur.</p>
-        </div>
-        <div class="p-6 border-t border-gray-200">
-            <div class="flex justify-between items-center mb-4 text-xl font-bold">
-                <span>Ümumi Qiymət:</span>
-                <span id="cart-total" class="text-violet-500">0 AZN</span>
-            </div>
-            <button id="checkout-button" class="checkout-button w-full bg-violet-500 text-white py-4 rounded-full font-bold text-lg hover:bg-violet-600 transition-colors duration-300" disabled>Sifarişi Tamamla</button>
-        </div>
-    </div>
-
-    <!-- Məhsul Detal Modalı -->
-    <div id="product-detail-modal-overlay" class="product-detail-modal-overlay">
-        <div id="product-detail-modal" class="product-detail-modal">
-            <div class="p-8">
-                <button id="close-detail-button" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 focus:outline-none">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <button type="submit" id="submitBtn"
+                        class="w-full py-3 mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg transition-all duration-300 ease-in-out disabled:opacity-50" disabled>
+                    Daxil ol
                 </button>
-                <div class="grid md:grid-cols-2 gap-8 items-start">
-                    <!-- Şəkil qalereyası -->
-                    <div class="relative">
-                        <img id="modal-main-image" src="" alt="" class="gallery-image shadow-xl">
-                        <div class="thumbnail-container" id="thumbnail-container">
-                            <!-- Kiçik şəkillər dinamik olaraq buraya əlavə ediləcək -->
-                        </div>
-                        <button id="prev-btn" class="gallery-nav-btn prev">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        <button id="next-btn" class="gallery-nav-btn next">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
-                    <div>
-                        <h3 id="modal-name" class="text-4xl font-extrabold text-violet-500 mb-4"></h3>
-                        <p id="modal-description" class="text-gray-700 mb-6"></p>
-                        <div class="flex flex-col md:flex-row md:items-center justify-between mb-4">
-                            <span id="modal-price" class="text-3xl font-bold text-violet-500"></span>
-                        </div>
-                        
-                        <!-- Yeni Endirim Bölməsi, yalnız gizli rejimdə görünür -->
-                        <div id="product-discount-section" class="hidden mt-8 p-4 bg-gray-100 rounded-lg border border-gray-200">
-                               <h4 class="text-lg font-semibold text-gray-700 mb-4">Endirim Tətbiq Et</h4>
-                               <div class="flex flex-wrap gap-2">
-                                   <button class="discount-option-btn-product" data-discount="10">10%</button>
-                                   <button class="discount-option-btn-product" data-discount="20">20%</button>
-                                   <button class="discount-option-btn-product" data-discount="30">30%</button>
-                                   <button class="discount-option-btn-product" data-discount="50">50%</button>
-                                   <button class="discount-option-btn-product" data-discount="70">70%</button>
-                                   <button class="discount-option-btn-product bg-red-500 text-white" data-discount="0">Sıfırla</button>
-                               </div>
-                        </div>
+                <p id="loadingMessage" class="text-center text-sm text-gray-400 hidden">Yüklənir...</p>
+            </form>
 
-                        <div class="mt-8 flex flex-col sm:flex-row gap-4">
-                            <button id="modal-add-to-cart-btn" class="flex-grow bg-violet-500 text-white py-4 px-10 rounded-full font-bold text-lg hover:bg-violet-600 transition-colors duration-300">Səbətə Əlavə Et</button>
-                            <!-- Yeni sil düyməsi, yalnız gizli rejimdə görünür -->
-                            <button id="modal-delete-btn" class="flex-grow bg-red-500 text-white py-4 px-10 rounded-full font-bold text-lg hover:bg-red-600 transition-colors duration-300 hidden">Sil</button>
-                        </div>
+            <div class="text-center">
+                <p id="toggleText" class="text-sm text-gray-400">
+                    Hesabın yoxdur? <a href="#" id="toggleLink" class="text-emerald-400 font-semibold hover:text-emerald-300">Qeydiyyat et</a>
+                </p>
+            </div>
+        </main>
+
+        <!-- Əsas Layihə Paneli (SaaS Feature) -->
+        <main id="homeSection" class="hidden p-4 md:p-8 space-y-8">
+            
+            <div class="flex flex-col md:flex-row md:space-x-8 space-y-8 md:space-y-0">
+                
+                <!-- Tapşırıq Əlavə Etmə Forması -->
+                <div class="md:w-1/3 p-6 bg-gray-700 rounded-xl shadow-lg h-fit">
+                    <h3 class="text-xl font-semibold text-white mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus-circle text-emerald-400 mr-2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+                        Yeni Tapşırıq Əlavə Et
+                    </h3>
+                    <form id="taskForm" class="space-y-4">
+                        <input type="text" id="taskName" placeholder="Tapşırığın adı (Məs: Ana Səhifə Dizaynı)" required
+                                class="w-full px-4 py-3 bg-gray-800 text-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-300">
+                        <textarea id="taskDescription" placeholder="Qısa təsvir..."
+                                class="w-full px-4 py-3 bg-gray-800 text-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-300 h-24"></textarea>
+                        <button type="submit" 
+                                class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg transition-all duration-300 ease-in-out">
+                            Tapşırığı Saxla
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Tapşırıq Siyahısı -->
+                <div class="md:w-2/3 p-6 bg-gray-700 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-semibold text-white mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-list text-emerald-400 mr-2"><rect width="8" height="4" x="8" y="2"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+                        Aktiv Tapşırıqlar
+                    </h3>
+                    <div id="taskListContainer" class="space-y-3 max-h-[50vh] overflow-y-auto">
+                        <!-- Tapşırıqlar bura yerləşəcək -->
+                        <p id="noTasksMessage" class="text-gray-400 text-center py-8">Hazırda aktiv tapşırıq yoxdur.</p>
+                        <div id="loadingTasks" class="text-center text-gray-400 py-4 hidden">Tapşırıqlar yüklənir...</div>
                     </div>
                 </div>
+
+            </div>
+            
+            <div class="mt-8 pt-4 border-t border-gray-700 text-sm text-gray-400 text-center">
+                <p id="userStatusDisplay" class="text-sm text-gray-400"></p>
+                <p class="text-xs mt-1">Siz daxil olmusunuz. Məlumatlarınız real-vaxt rejimində Firestore-da saxlanılır.</p>
+            </div>
+        </main>
+
+        <!-- Mesaj Qutusu (Error/Success) -->
+        <div id="messageBox" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center p-4 z-50">
+            <div class="bg-gray-700 text-white p-6 rounded-xl shadow-2xl text-center max-w-xs w-full transform transition-all duration-300 scale-100">
+                <p id="messageText" class="text-lg mb-4"></p>
+                <button onclick="hideMessage()" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg font-semibold">Bağla</button>
             </div>
         </div>
-    </div>
-    
-    <!-- Şifrə Modalı -->
-    <div id="password-modal-overlay" class="password-modal-overlay">
-        <div id="password-modal" class="message-box">
-            <h4 class="text-2xl font-bold mb-4">Gizli Bölməyə Giriş</h4>
-            <p class="text-gray-600 mb-6">Davam etmək üçün şifrəni daxil edin:</p>
-            <input type="password" id="password-input" class="w-full p-3 rounded-lg border border-gray-300 mb-4 text-center focus:outline-none focus:ring-2 focus:ring-violet-500 text-blue-800" placeholder="Şifrəni yazın...">
-            <button id="submit-password-btn" class="w-full bg-violet-500 text-white py-3 rounded-full font-medium hover:bg-violet-600 transition-colors duration-300">Daxil Ol</button>
-            <p id="password-error" class="text-red-500 mt-2 hidden">Şifrə yanlışdır!</p>
-        </div>
-    </div>
-    
-    <!-- Xüsusi mesaj qutusu -->
-    <div id="message-box-overlay" class="message-box-overlay">
-        <div id="message-box" class="message-box">
-            <p id="message-box-text" class="text-lg mb-6"></p>
-            <button id="message-box-close-button" class="bg-violet-500 text-white py-3 px-8 rounded-full font-medium hover:bg-violet-600 transition-colors duration-300">Bağla</button>
-        </div>
+
     </div>
 
-    <!-- Təsdiq Modalı -->
-    <div id="confirmation-modal-overlay" class="confirmation-modal-overlay">
-        <div id="confirmation-modal" class="message-box">
-            <p id="confirmation-text" class="text-lg mb-6 font-semibold"></p>
-            <div class="flex justify-around space-x-4">
-                <button id="confirm-yes-button" class="bg-red-500 text-white py-3 px-8 rounded-full font-medium hover:bg-red-600 transition-colors duration-300">Bəli, sil</button>
-                <button id="confirm-no-button" class="bg-gray-400 text-white py-3 px-8 rounded-full font-medium hover:bg-gray-500 transition-colors duration-300">Xeyr</button>
-            </div>
-        </div>
-    </div>
-
+    <!-- Firebase SDK Imports -->
     <script type="module">
-        // Firebase-dən lazımlı funksiyaları import edirik
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, setDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, Timestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // İstifadəçinin təqdim etdiyi Firebase konfiqurasiyası
-        const firebaseConfig = {
-          apiKey: "AIzaSyDnvDt4pB6fK88soJHyCMsig8F7UBoWSPM",
-          authDomain: "mubag-style.firebaseapp.com",
-          projectId: "mubag-style",
-          storageBucket: "mubag-style.firebasestorage.app",
-          messagingSenderId: "1093484952570",
-          appId: "1:1093484952570:web:b7ecbb9c3c2c791839c243",
-          measurementId: "G-YCBMK65DKN"
-        };
+        // Global Variables
+        let db;
+        let auth;
+        let currentUserId = null;
+        let isAuthReady = false;
         
-        // Canvas mühiti üçün xüsusi dəyişənləri istifadə edirik
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        // Canvas tərəfindən təmin edilən qlobal dəyişənləri istifadə edirik
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-masroxx-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        // Firebase-i başladırıq
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // === Məhsul məlumatları ===
-        // İstifadəçinin istəyi ilə bütün ilkin məhsullar silindi.
-        // İndi idarəetmə panelindən istifadə edərək öz məhsullarınızı əlavə edə bilərsiniz.
-        let products = [];
-
-        // === Ümumi dəyişənlər ===
-        let cart = [];
-        let secretModeEnabled = false;
-        let currentModalProduct = null;
-        let confirmationCallback = null;
-
-        // === DOM Elementləri ===
-        const cartButton = document.getElementById('cart-button');
-        const cartOverlay = document.getElementById('cart-overlay');
-        const cartSidebar = document.getElementById('cart-sidebar');
-        const closeCartButton = document.getElementById('close-cart-button');
-        const cartItemsContainer = document.getElementById('cart-items');
-        const cartCountSpan = document.getElementById('cart-count');
-        const cartTotalSpan = document.getElementById('cart-total');
-        const emptyCartMessage = document.getElementById('empty-cart-message');
-        const checkoutButton = document.getElementById('checkout-button');
-
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
-
-        const productListContainer = document.getElementById('product-list');
-        const noProductsMessage = document.getElementById('no-products-message');
-        const filterButtonsContainer = document.getElementById('filter-buttons-container');
-
-        const productDetailModalOverlay = document.getElementById('product-detail-modal-overlay');
-        const productDetailModal = document.getElementById('product-detail-modal');
-        const closeDetailButton = document.getElementById('close-detail-button');
-        const modalName = document.getElementById('modal-name');
-        const modalDescription = document.getElementById('modal-description');
-        const modalPrice = document.getElementById('modal-price');
-        const modalMainImage = document.getElementById('modal-main-image');
-        const thumbnailContainer = document.getElementById('thumbnail-container');
-        const prevBtn = document.getElementById('prev-btn');
-        const nextBtn = document.getElementById('next-btn');
-        const modalAddToCartBtn = document.getElementById('modal-add-to-cart-btn');
-        const modalDeleteBtn = document.getElementById('modal-delete-btn');
-        const productDiscountSection = document.getElementById('product-discount-section');
+        // UI Elementləri
+        const authForm = document.getElementById('authForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const authSection = document.getElementById('authSection');
+        const homeSection = document.getElementById('homeSection');
+        const formTitle = document.getElementById('formTitle');
+        const submitBtn = document.getElementById('submitBtn');
+        const toggleLink = document.getElementById('toggleLink');
+        const toggleText = document.getElementById('toggleText');
+        const pageTitle = document.getElementById('pageTitle');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const userStatusDisplay = document.getElementById('userStatusDisplay');
+        const taskForm = document.getElementById('taskForm');
+        const taskListContainer = document.getElementById('taskListContainer');
+        const taskNameInput = document.getElementById('taskName');
+        const taskDescriptionInput = document.getElementById('taskDescription');
+        const noTasksMessage = document.getElementById('noTasksMessage');
+        const loadingTasks = document.getElementById('loadingTasks');
+        const loadingMessage = document.getElementById('loadingMessage');
         
-        const passwordModalOverlay = document.getElementById('password-modal-overlay');
-        const passwordInput = document.getElementById('password-input');
-        const submitPasswordBtn = document.getElementById('submit-password-btn');
-        const passwordError = document.getElementById('password-error');
-        const privateAccessLink = document.getElementById('private-access-link');
-        const secretContent = document.getElementById('secret-content');
-        
-        const productUploadForm = document.getElementById('product-upload-form');
-        const fileInput = document.getElementById('fileInput');
-        const previewContainer = document.getElementById('preview-container');
-        const noPreviewText = document.getElementById('no-preview-text');
-        const dailyVisitorCountSpan = document.getElementById('daily-visitor-count');
-        const clearProductsBtn = document.getElementById('clear-products-btn');
-        const submitProductBtn = document.getElementById('submit-product-btn');
+        let isLoginMode = true;
 
-        const messageBoxOverlay = document.getElementById('message-box-overlay');
-        const messageBoxText = document.getElementById('message-box-text');
-        const messageBoxCloseButton = document.getElementById('message-box-close-button');
-        
-        const confirmationModalOverlay = document.getElementById('confirmation-modal-overlay');
-        const confirmationText = document.getElementById('confirmation-text');
-        const confirmYesButton = document.getElementById('confirm-yes-button');
-        const confirmNoButton = document.getElementById('confirm-no-button');
-
-
-        // === Funksiyalar ===
-
-        /**
-         * Xüsusi mesaj qutusunu göstərir.
-         * @param {string} message Görüntülənəcək mətn.
-         */
-        function showMessageBox(message) {
-            messageBoxText.textContent = message;
-            messageBoxOverlay.style.display = 'flex';
-        }
-
-        /**
-         * Təsdiq modalını göstərir.
-         * @param {string} message Görüntülənəcək mətn.
-         * @param {Function} onConfirm Təsdiq edildikdə işə düşəcək funksiya.
-         */
-        function showConfirmationModal(message, onConfirm) {
-            confirmationText.textContent = message;
-            confirmationCallback = onConfirm;
-            confirmationModalOverlay.style.display = 'flex';
-        }
-
-        /**
-         * Təsdiq modalını gizlədir.
-         */
-        function hideConfirmationModal() {
-            confirmationModalOverlay.style.display = 'none';
-        }
-
-        /**
-         * Bütün məhsulları ekranda göstərir.
-         * @param {Array} productArray Göstəriləcək məhsulların massivi.
-         */
-        function renderProducts(productArray) {
-            productListContainer.innerHTML = ''; // Köhnə məhsulları silirik
-            if (productArray.length === 0) {
-                noProductsMessage.classList.remove('hidden');
-            } else {
-                noProductsMessage.classList.add('hidden');
-                productArray.forEach(product => {
-                    const productCard = document.createElement('div');
-                    productCard.classList.add('product-card', 'bg-white', 'rounded-xl', 'shadow-lg', 'p-6');
-                    productCard.dataset.id = product.id;
-
-                    const priceHtml = product.isDiscounted ?
-                        `<p class="text-violet-500 font-bold text-xl">${(product.price).toFixed(2)} AZN</p>
-                        <p class="original-price">${(product.originalPrice).toFixed(2)} AZN</p>` :
-                        `<p class="text-violet-500 font-bold text-xl">${(product.price).toFixed(2)} AZN</p>`;
-
-                    productCard.innerHTML = `
-                        <div class="relative w-full h-64 mb-4 rounded-xl overflow-hidden">
-                            <img src="${product.images[0]}" alt="${product.name}" class="w-full h-full object-cover">
-                            ${product.isDiscounted ? `<span class="discount-badge">-${product.discount}%</span>` : ''}
-                        </div>
-                        <h4 class="text-xl font-bold mb-2">${product.name}</h4>
-                        <div class="flex items-center">
-                            ${priceHtml}
-                        </div>
-                    `;
-                    productListContainer.appendChild(productCard);
-                });
-            }
-        }
-
-        /**
-         * Məhsul detalları modalını göstərir.
-         * @param {object} product Görüntülənəcək məhsul obyekti.
-         */
-        function showProductDetail(product) {
-            currentModalProduct = product; // Cari məhsulu dəyişəndə saxlayırıq
-            modalName.textContent = product.name;
-            modalDescription.textContent = product.description;
-            modalMainImage.src = product.images[0];
-            modalMainImage.alt = product.name;
-
-            // Qiyməti formatlayırıq
-            if (product.isDiscounted) {
-                modalPrice.innerHTML = `<span class="text-3xl font-bold text-violet-500">${(product.price).toFixed(2)} AZN</span>
-                                        <span class="original-price">${(product.originalPrice).toFixed(2)} AZN</span>`;
-            } else {
-                modalPrice.innerHTML = `<span class="text-3xl font-bold text-violet-500">${(product.price).toFixed(2)} AZN</span>`;
-            }
-
-            // Şəkil qalereyasını yaradırıq
-            thumbnailContainer.innerHTML = '';
-            product.images.forEach((imgSrc, index) => {
-                const thumbnailImg = document.createElement('img');
-                thumbnailImg.src = imgSrc;
-                thumbnailImg.alt = `Thumbnail ${index + 1}`;
-                thumbnailImg.classList.add('thumbnail', 'shadow-md');
-                if (index === 0) {
-                    thumbnailImg.classList.add('active');
-                }
-                thumbnailImg.addEventListener('click', () => {
-                    modalMainImage.src = imgSrc;
-                    document.querySelectorAll('.thumbnail').forEach(thumb => thumb.classList.remove('active'));
-                    thumbnailImg.classList.add('active');
-                });
-                thumbnailContainer.appendChild(thumbnailImg);
-            });
-
-            // Admin panel düymələrini gizli rejimə uyğun göstəririk
-            if (secretModeEnabled) {
-                modalDeleteBtn.classList.remove('hidden');
-                productDiscountSection.classList.remove('hidden');
-            } else {
-                modalDeleteBtn.classList.add('hidden');
-                productDiscountSection.classList.add('hidden');
-            }
-
-            productDetailModalOverlay.style.display = 'flex';
-        }
-
-        /**
-         * Səbəti yeniləyir və ekranda göstərir.
-         */
-        function updateCart() {
-            cartItemsContainer.innerHTML = '';
-            let total = 0;
-
-            if (cart.length === 0) {
-                emptyCartMessage.classList.remove('hidden');
-                checkoutButton.disabled = true;
-            } else {
-                emptyCartMessage.classList.add('hidden');
-                checkoutButton.disabled = false;
-
-                cart.forEach(item => {
-                    total += item.price * item.quantity;
-
-                    const cartItemDiv = document.createElement('div');
-                    cartItemDiv.classList.add('flex', 'items-center', 'justify-between', 'gap-4', 'p-4', 'bg-gray-100', 'rounded-xl', 'mb-4', 'shadow-sm');
-                    cartItemDiv.innerHTML = `
-                        <div class="flex items-center gap-4">
-                            <img src="${item.images[0]}" alt="${item.name}" class="w-16 h-16 object-cover rounded-lg">
-                            <div>
-                                <h5 class="font-bold text-lg text-blue-800">${item.name}</h5>
-                                <p class="text-violet-500 font-semibold">${(item.price * item.quantity).toFixed(2)} AZN</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <button data-id="${item.id}" class="remove-from-cart-btn bg-red-400 text-white w-8 h-8 rounded-full hover:bg-red-500 transition-colors duration-300">-</button>
-                            <span>${item.quantity}</span>
-                            <button data-id="${item.id}" class="add-to-cart-btn bg-green-400 text-white w-8 h-8 rounded-full hover:bg-green-500 transition-colors duration-300">+</button>
-                            <button data-id="${item.id}" class="delete-from-cart-btn text-gray-500 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
-                        </div>
-                    `;
-                    cartItemsContainer.appendChild(cartItemDiv);
-                });
-            }
-
-            cartCountSpan.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
-            cartTotalSpan.textContent = `${total.toFixed(2)} AZN`;
-        }
-
-        /**
-         * Məhsulu səbətə əlavə edir.
-         * @param {object} product Əlavə ediləcək məhsul obyekti.
-         */
-        function addToCart(product) {
-            const existingItem = cart.find(item => item.id === product.id);
-            if (existingItem) {
-                existingItem.quantity += 1;
-            } else {
-                cart.push({ ...product, quantity: 1 });
-            }
-            updateCart();
-            showMessageBox(`${product.name} səbətə əlavə edildi!`);
-        }
-        
-        // === Hadisə dinləyiciləri ===
-        // Bütün hadisə dinləyicilərini DOMContentLoaded içərisinə yerləşdirdik ki, səhifə tam yüklənəndən sonra işə düşsün
-        document.addEventListener('DOMContentLoaded', () => {
-            renderProducts(products);
+        // Mesaj Qutusu Funksiyaları
+        function showMessage(msg, type = 'success') {
+            const messageBox = document.getElementById('messageBox');
+            const messageText = document.getElementById('messageText');
+            messageText.innerText = msg;
             
-            mobileMenuButton.addEventListener('click', () => {
-                mobileMenu.classList.toggle('hidden');
-            });
+            // Rənginə görə mesajın növünü dəyişdirə bilərik
+            const boxContent = messageBox.querySelector('.bg-gray-700');
+            boxContent.classList.remove('bg-red-700', 'bg-emerald-700');
+            if (type === 'error') {
+                boxContent.classList.add('bg-red-700');
+            } else {
+                boxContent.classList.add('bg-gray-700');
+            }
 
-            cartButton.addEventListener('click', () => {
-                cartSidebar.classList.add('open');
-                cartOverlay.style.display = 'block';
-            });
+            messageBox.classList.remove('hidden');
+            messageBox.classList.add('flex');
+        }
 
-            closeCartButton.addEventListener('click', () => {
-                cartSidebar.classList.remove('open');
-                cartOverlay.style.display = 'none';
-            });
-            
-            cartOverlay.addEventListener('click', () => {
-                cartSidebar.classList.remove('open');
-                cartOverlay.style.display = 'none';
-            });
+        window.hideMessage = function() {
+            document.getElementById('messageBox').classList.remove('flex');
+            document.getElementById('messageBox').classList.add('hidden');
+        }
 
-            productListContainer.addEventListener('click', (e) => {
-                const productCard = e.target.closest('.product-card');
-                if (productCard) {
-                    const productId = productCard.dataset.id;
-                    const product = products.find(p => p.id === productId);
-                    if (product) {
-                        showProductDetail(product);
-                    }
-                }
-            });
+        // --- Firebase İcazə Funksiyaları ---
 
-            closeDetailButton.addEventListener('click', () => {
-                productDetailModalOverlay.style.display = 'none';
-            });
-            
-            productDetailModalOverlay.addEventListener('click', (e) => {
-                if (e.target === productDetailModalOverlay) {
-                    productDetailModalOverlay.style.display = 'none';
-                }
-            });
+        async function initFirebase() {
+            try {
+                // Hər hansı bir xəta olarsa konsola yazılması üçün
+                setLogLevel('Debug');
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
 
-            filterButtonsContainer.addEventListener('click', (e) => {
-                const button = e.target.closest('.filter-button');
-                if (button) {
-                    // Aktiv düymə stilini dəyişirik
-                    document.querySelectorAll('.filter-button').forEach(btn => btn.classList.remove('active'));
-                    button.classList.add('active');
-
-                    const filterCategory = button.dataset.filter;
-                    if (filterCategory === 'all') {
-                        renderProducts(products);
-                    } else {
-                        const filteredProducts = products.filter(p => p.category.includes(filterCategory));
-                        renderProducts(filteredProducts);
-                    }
-                }
-            });
-
-            modalAddToCartBtn.addEventListener('click', () => {
-                if (currentModalProduct) {
-                    addToCart(currentModalProduct);
-                    productDetailModalOverlay.style.display = 'none';
-                }
-            });
-
-            cartItemsContainer.addEventListener('click', (e) => {
-                const id = e.target.closest('button')?.dataset.id;
-                if (!id) return;
-
-                const item = cart.find(i => i.id === id);
-                if (!item) return;
-
-                if (e.target.classList.contains('add-to-cart-btn')) {
-                    item.quantity++;
-                } else if (e.target.classList.contains('remove-from-cart-btn')) {
-                    if (item.quantity > 1) {
-                        item.quantity--;
-                    } else {
-                        cart = cart.filter(i => i.id !== id);
-                    }
-                } else if (e.target.closest('.delete-from-cart-btn')) {
-                    cart = cart.filter(i => i.id !== id);
-                }
-                updateCart();
-            });
-
-            messageBoxCloseButton.addEventListener('click', () => {
-                messageBoxOverlay.style.display = 'none';
-            });
-
-            // Özəl giriş linkinə klik hadisəsi
-            privateAccessLink.addEventListener('click', (e) => {
-                e.preventDefault(); // Səhifənin yuxarıya sürüşməsinin qarşısını alır
-                passwordModalOverlay.style.display = 'flex';
-            });
-
-            submitPasswordBtn.addEventListener('click', () => {
-                const password = passwordInput.value;
-                // Şifrəni 1975 olaraq dəyişdik
-                if (password === '1975') {
-                    secretModeEnabled = true;
-                    passwordModalOverlay.style.display = 'none';
-                    secretContent.style.display = 'block';
-                    document.body.classList.add('secret-mode-background');
-                    showMessageBox('Gizli idarəetmə paneli aktivləşdirildi!');
-                    renderProducts(products); // Məhsulları yenidən render edirik
+                // İstifadəçini verilmiş token ilə və ya anonim daxil etmək
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
                 } else {
-                    passwordError.classList.remove('hidden');
-                    passwordInput.value = '';
+                    await signInAnonymously(auth);
                 }
-            });
-            
-            fileInput.addEventListener('change', (e) => {
-                previewContainer.innerHTML = ''; // Köhnə önizləmələri təmizləyirik
-                const files = e.target.files;
-                if (files.length > 0) {
-                    noPreviewText.classList.add('hidden');
-                    for (const file of files) {
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                            const img = document.createElement('img');
-                            img.src = event.target.result;
-                            img.classList.add('w-24', 'h-24', 'object-cover', 'rounded-lg', 'shadow-md');
-                            previewContainer.appendChild(img);
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                } else {
-                     noPreviewText.classList.remove('hidden');
-                }
-            });
 
-            productUploadForm.addEventListener('submit', async (e) => {
+                // İstifadəçi statusunun dəyişməsini dinləmək
+                onAuthStateChanged(auth, (user) => {
+                    currentUserId = user ? user.uid : null;
+                    isAuthReady = true;
+                    updateAppUI(user);
+                    if (user) {
+                        // İstifadəçi daxil olduqdan sonra tapşırıqları dinləməyə başlayırıq
+                        listenForTasks(); 
+                    }
+                });
+
+                submitBtn.disabled = false; // Firebase hazır olduqda düyməni aktivləşdir
+                loadingMessage.classList.add('hidden');
+            } catch (error) {
+                console.error("Firebase tətbiqi başlanarkən xəta: ", error);
+                showMessage("Tətbiq başlanarkən xəta: " + error.message, 'error');
+                submitBtn.innerText = "Xəta: Təkrar cəhd edin";
+            }
+        }
+
+        // UI-ı istifadəçinin statusuna görə güncəlləyən funksiya
+        function updateAppUI(user) {
+            if (user && user.email) {
+                // Daxil olub
+                authSection.classList.add('hidden');
+                homeSection.classList.remove('hidden');
+                logoutBtn.classList.remove('hidden');
+                pageTitle.innerText = "Masroxx Paneli";
+                userStatusDisplay.innerHTML = `<span class="font-bold text-white">${user.email}</span> olaraq daxil oldunuz. ID: <span class="text-emerald-400">${currentUserId}</span>`;
+            } else {
+                // Daxil olmayıb
+                authSection.classList.remove('hidden');
+                homeSection.classList.add('hidden');
+                logoutBtn.classList.add('hidden');
+                pageTitle.innerText = "Xoş gəlmisiniz!";
+                updateFormUI(); // Formanın login/qeydiyyat vəziyyətini yenilə
+            }
+        }
+
+        // Qeydiyyat
+        async function register(email, password) {
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                showMessage("Qeydiyyat uğurludur! Avtomatik daxil oldunuz.");
+                // onAuthStateChanged avtomatik UI-ı güncəlləyəcək
+            } catch (error) {
+                console.error("Qeydiyyat xətası:", error);
+                showMessage("Qeydiyyat uğursuz oldu: " + error.message, 'error');
+            }
+        }
+
+        // Giriş
+        async function login(email, password) {
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                showMessage("Daxil olma uğurludur!");
+                // onAuthStateChanged avtomatik UI-ı güncəlləyəcək
+            } catch (error) {
+                console.error("Giriş xətası:", error);
+                showMessage("Giriş uğursuz oldu: Email və ya şifrə yanlışdır.", 'error');
+            }
+        }
+
+        // Çıxış
+        window.logout = async function() {
+            try {
+                await signOut(auth);
+                showMessage("Uğurla çıxış etdiniz.");
+                // onAuthStateChanged avtomatik UI-ı güncəlləyəcək
+            } catch (error) {
+                console.error("Çıxış xətası:", error);
+                showMessage("Çıxış zamanı xəta baş verdi.", 'error');
+            }
+        }
+
+        // --- Auth UI Logikası ---
+
+        // Formanın rejimini dəyişdir (login/qeydiyyat)
+        function updateFormUI() {
+            // Toggles between Login and Register views
+            if (isLoginMode) {
+                formTitle.innerText = "Giriş";
+                submitBtn.innerText = "Daxil ol";
+                toggleText.innerHTML = `Hesabın yoxdur? <a href="#" id="toggleLink" class="text-emerald-400 font-semibold hover:text-emerald-300">Qeydiyyat et</a>`;
+            } else {
+                formTitle.innerText = "Qeydiyyat";
+                submitBtn.innerText = "Qeydiyyat et";
+                toggleText.innerHTML = `Artıq hesabın var? <a href="#" id="toggleLink" class="text-emerald-400 font-semibold hover:text-emerald-300">Giriş et</a>`;
+            }
+            // Toggle linki yenidən təyin etməliyik, çünki innerHTML dəyişib
+            document.getElementById('toggleLink').addEventListener('click', (e) => {
                 e.preventDefault();
-                
-                const name = document.getElementById('product-name').value;
-                const description = document.getElementById('product-description').value;
-                const price = parseFloat(document.getElementById('product-price').value);
-                const category = [document.getElementById('product-category').value];
-                const files = fileInput.files;
-
-                if (!name || !description || isNaN(price) || files.length === 0) {
-                    showMessageBox('Zəhmət olmasa bütün sahələri doldurun və şəkil əlavə edin.');
-                    return;
-                }
-
-                submitProductBtn.disabled = true;
-                submitProductBtn.innerHTML = '<div class="loader"></div>';
-                
-                try {
-                    // Şəkilləri oxuyub Data URL kimi saxlamaq üçün Promise-dən istifadə edirik
-                    const imagePromises = Array.from(files).map(file => {
-                        return new Promise((resolve, reject) => {
-                            const reader = new FileReader();
-                            reader.onload = () => resolve(reader.result);
-                            reader.onerror = reject;
-                            reader.readAsDataURL(file);
-                        });
-                    });
-
-                    const imageUrls = await Promise.all(imagePromises);
-
-                    const newProduct = {
-                        id: `p${products.length + 1}`,
-                        name,
-                        description,
-                        price,
-                        originalPrice: null,
-                        discount: 0,
-                        images: imageUrls,
-                        category,
-                        isDiscounted: false
-                    };
-                    
-                    products.push(newProduct);
-                    renderProducts(products);
-                    productUploadForm.reset();
-                    previewContainer.innerHTML = `<p id="no-preview-text" class="text-gray-500 italic flex items-center justify-center w-full">Şəkillər burda görünəcək.</p>`;
-                    showMessageBox('Yeni məhsul uğurla əlavə edildi!');
-                } catch (error) {
-                    console.error("Şəkil yüklənərkən xəta baş verdi:", error);
-                    showMessageBox('Şəkil yüklənərkən bir xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.');
-                } finally {
-                    submitProductBtn.disabled = false;
-                    submitProductBtn.innerHTML = 'Məhsulu Yüklə';
-                }
+                isLoginMode = !isLoginMode;
+                updateFormUI();
             });
+        }
+        
+        // Forma təqdim etmə hadisəsi
+        authForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = emailInput.value;
+            const password = passwordInput.value;
             
-            clearProductsBtn.addEventListener('click', () => {
-                showConfirmationModal('Əminsiniz? Bütün məhsullar silinəcək.', () => {
-                    products = [];
-                    renderProducts(products);
-                    hideConfirmationModal();
-                    showMessageBox('Bütün məhsullar silindi!');
+            if (isLoginMode) {
+                login(email, password);
+            } else {
+                register(email, password);
+            }
+        });
+
+        // --- Firestore Məlumat Funksiyaları (Tapşırıqlar) ---
+
+        // Tapşırıq kolleksiyasının yolunu təyin edir (Şəxsi Məlumat)
+        function getTasksCollectionPath(userId) {
+            if (!userId || !appId) {
+                console.error("App ID və ya User ID mövcud deyil.");
+                return null;
+            }
+            // Şəxsi kolleksiya yolu: /artifacts/{appId}/users/{userId}/tasks
+            return `artifacts/${appId}/users/${userId}/tasks`;
+        }
+
+        // Tapşırıq əlavə etmə
+        taskForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUserId) return showMessage("Daxil olun və ya qeydiyyatdan keçin.", 'error');
+            
+            const name = taskNameInput.value.trim();
+            const description = taskDescriptionInput.value.trim();
+            const path = getTasksCollectionPath(currentUserId);
+
+            if (!name || !path) {
+                return showMessage("Tapşırıq adı boş ola bilməz.", 'error');
+            }
+
+            try {
+                const docRef = await addDoc(collection(db, path), {
+                    name: name,
+                    description: description,
+                    createdAt: Timestamp.now(),
+                    completed: false
                 });
-            });
+                showMessage("Tapşırıq uğurla əlavə edildi!", 'success');
+                taskNameInput.value = '';
+                taskDescriptionInput.value = '';
+                console.log("Əlavə edilən sənəd ID: ", docRef.id);
+            } catch (error) {
+                console.error("Tapşırıq əlavə edilərkən xəta: ", error);
+                showMessage("Tapşırıq əlavə edilərkən xəta: " + error.message, 'error');
+            }
+        });
 
-            modalDeleteBtn.addEventListener('click', () => {
-                if (currentModalProduct) {
-                    showConfirmationModal(`Əminsiniz? "${currentModalProduct.name}" məhsulu silinəcək.`, () => {
-                        products = products.filter(p => p.id !== currentModalProduct.id);
-                        renderProducts(products);
-                        productDetailModalOverlay.style.display = 'none';
-                        hideConfirmationModal();
-                        showMessageBox('Məhsul uğurla silindi!');
-                    });
-                }
-            });
+        // Tapşırıq silmə
+        window.deleteTask = async function(taskId) {
+            if (!currentUserId || !confirm("Tapşırığı silmək istədiyinizə əminsiniz?")) return;
+
+            const path = getTasksCollectionPath(currentUserId);
+            if (!path) return;
             
-            // Endirim düymələri üçün hadisə dinləyicisi
-            productDiscountSection.addEventListener('click', (e) => {
-                const button = e.target.closest('.discount-option-btn-product');
-                if (button && currentModalProduct) {
-                    const discount = parseInt(button.dataset.discount, 10);
-                    const originalPrice = currentModalProduct.originalPrice || currentModalProduct.price;
+            try {
+                const taskDocRef = doc(db, path, taskId);
+                await deleteDoc(taskDocRef);
+                showMessage("Tapşırıq silindi.", 'success');
+            } catch (error) {
+                console.error("Tapşırıq silinərkən xəta: ", error);
+                showMessage("Tapşırıq silinərkən xəta: " + error.message, 'error');
+            }
+        }
+        
+        // Tapşırıqları dinləmə (Real-vaxt yeniləmə)
+        let unsubscribeTasks = null;
+        function listenForTasks() {
+            if (!isAuthReady || !currentUserId || !db) {
+                return;
+            }
 
-                    if (discount === 0) {
-                        currentModalProduct.isDiscounted = false;
-                        currentModalProduct.discount = 0;
-                        currentModalProduct.price = originalPrice;
-                        currentModalProduct.originalPrice = null;
-                    } else {
-                        currentModalProduct.isDiscounted = true;
-                        currentModalProduct.discount = discount;
-                        currentModalProduct.originalPrice = originalPrice;
-                        currentModalProduct.price = originalPrice - (originalPrice * discount / 100);
-                    }
+            // Əgər əvvəlki dinləyici varsa, onu dayandır
+            if (unsubscribeTasks) {
+                unsubscribeTasks();
+                unsubscribeTasks = null;
+            }
+
+            const path = getTasksCollectionPath(currentUserId);
+            if (!path) return;
+
+            const tasksCollection = collection(db, path);
+            taskListContainer.innerHTML = '';
+            noTasksMessage.classList.add('hidden');
+            loadingTasks.classList.remove('hidden');
+
+            // onSnapshot istifadə edərək real-vaxt dinləmə
+            unsubscribeTasks = onSnapshot(tasksCollection, (snapshot) => {
+                loadingTasks.classList.add('hidden');
+                taskListContainer.innerHTML = ''; // Siyahını təmizlə
+
+                if (snapshot.empty) {
+                    noTasksMessage.classList.remove('hidden');
+                    return;
+                } else {
+                    noTasksMessage.classList.add('hidden');
+                }
+
+                snapshot.forEach((doc) => {
+                    const task = doc.data();
+                    const taskId = doc.id;
+                    const taskElement = document.createElement('div');
                     
-                    showProductDetail(currentModalProduct);
-                }
-            });
+                    // Vaxtı formatlama
+                    const date = task.createdAt ? task.createdAt.toDate().toLocaleDateString('az-AZ', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Naməlum vaxt';
 
-            // Təsdiq modalı düymələri
-            confirmYesButton.addEventListener('click', () => {
-                if (confirmationCallback) {
-                    confirmationCallback();
-                }
+                    taskElement.className = 'flex items-start justify-between p-4 bg-gray-800 rounded-xl shadow-md border-l-4 border-emerald-500 hover:bg-gray-700 transition-colors duration-200';
+                    taskElement.innerHTML = `
+                        <div class="flex-1 min-w-0 pr-4">
+                            <p class="text-lg font-semibold text-white truncate">${task.name}</p>
+                            <p class="text-sm text-gray-400 mt-1 break-words">${task.description || 'Təsvir yoxdur.'}</p>
+                            <p class="text-xs text-gray-500 mt-2">Əlavə edilmə: ${date}</p>
+                        </div>
+                        <div class="flex items-center space-x-2 flex-shrink-0">
+                            <!-- Silmə düyməsi -->
+                            <button onclick="deleteTask('${taskId}')" class="text-red-400 hover:text-red-500 p-2 rounded-full transition-colors duration-200" title="Sil">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                            </button>
+                        </div>
+                    `;
+                    taskListContainer.appendChild(taskElement);
+                });
+            }, (error) => {
+                console.error("Tapşırıq dinlənilərkən xəta: ", error);
+                loadingTasks.classList.add('hidden');
+                noTasksMessage.classList.remove('hidden');
+                noTasksMessage.innerText = "Məlumatı yükləmək mümkün olmadı: " + error.message;
             });
+        }
+        
+        // Səhifə yüklənəndə Firebase-i başla
+        window.onload = function () {
+            // Başlanğıcda düyməni deaktiv et və yükləmə mesajını göstər
+            submitBtn.disabled = true;
+            loadingMessage.classList.remove('hidden');
             
-            confirmNoButton.addEventListener('click', () => {
-                hideConfirmationModal();
-            });
-            
-            checkoutButton.addEventListener('click', () => {
-                showMessageBox('Sifarişiniz uğurla yerləşdirildi. Təşəkkür edirik!');
-                cart = [];
-                updateCart();
-                cartSidebar.classList.remove('open');
-                cartOverlay.style.display = 'none';
-            });
+            initFirebase();
+            updateFormUI(); // Linkin click hadisəsini düzgün təyin etmək üçün
+        }
 
-            // === Firebase Ziyarətçi Sayğacı Logikası ===
-            const updateVisitorCount = async () => {
-                try {
-                    // Bugünün tarixini "YYYY-MM-DD" formatında alırıq
-                    const today = new Date();
-                    const year = today.getFullYear();
-                    const month = String(today.getMonth() + 1).padStart(2, '0');
-                    const day = String(today.getDate()).padStart(2, '0');
-                    const todayDocId = `${year}-${month}-${day}`;
-
-                    // Firestore-da sənədə istinad alırıq
-                    const visitorDocRef = doc(db, `artifacts/${appId}/public/data/visitorCounts/${todayDocId}`);
-
-                    // Sənədi yeniləyir və ya yaradırıq.
-                    // update() əvəzinə setDoc() və merge: true istifadə edirik ki, əgər sənəd yoxdursa yaradılsın.
-                    await setDoc(visitorDocRef, { count: increment(1) }, { merge: true });
-
-                } catch (error) {
-                    console.error("Ziyarətçi sayğacını yeniləyərkən xəta baş verdi:", error);
-                }
-            };
-
-            // Səhifə yüklənərkən sayğacı artırırıq
-            updateVisitorCount();
-
-            // Real vaxtda dəyişiklikləri dinləyirik
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const day = String(today.getDate()).padStart(2, '0');
-            const todayDocId = `${year}-${month}-${day}`;
-            const visitorDocRef = doc(db, `
+    </script>
+</body>
+</html>
