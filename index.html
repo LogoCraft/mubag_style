@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Instagram SaaS Metrik Takibi (LocalStore)</title>
+  <title>Instagram SaaS Metrik Takibi (Gelişmiş Admin)</title>
 
   <!-- Tailwind (CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -11,67 +11,224 @@
   <!-- Chart.js (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
+  <!-- Icon: Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+
   <style>
-    /* küçük lokal stiller (Inter font yerine sistem fontu) */
-    .font-inter { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+    /* küçük lokal stiller (Inter font) */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+    .font-inter { font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+
+    /* Chart.js container'ın responsively doğru çalışması için */
+    #chart-area { position: relative; }
+    #metric-chart { width: 100% !important; height: 100% !important; }
   </style>
 </head>
-<body class="bg-gray-50 font-inter">
+<body class="bg-gray-50 font-inter" onload="lucide.createIcons()">
 
 <!-- App root -->
 <div id="app-root"></div>
 
+<!-- Custom Modal Placeholder (for delete and confirmation messages + Account Switch/Add) -->
+<div id="custom-modal-backdrop" class="hidden fixed inset-0 bg-gray-900 bg-opacity-70 z-50 flex items-center justify-center p-4">
+    <div id="custom-modal" class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm transform transition-all duration-300 scale-100">
+        <h3 id="modal-title" class="text-xl font-bold mb-4 text-gray-800">Başlık</h3>
+        <p id="modal-content" class="text-gray-600 mb-6">İçerik</p>
+        <div id="modal-actions" class="flex justify-end space-x-3">
+            <button id="modal-cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition">İptal</button>
+            <button id="modal-confirm-btn" class="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition">Onayla</button>
+        </div>
+    </div>
+</div>
+
 <script>
 /*
-  Tek dosya: Login + Dashboard
+  Tek dosya: Login + Dashboard + Admin Panel
   - Veriler localStorage'da tutulur.
-  - Her kullanıcının verisi ayrı: dashboard_data_<safeEmail>
-  - Chart.js kullanılarak görselleştirme yapılır.
+  - Admin kullanıcı: elaymemmedli27@gmail.com / Elsever1975
 */
 
-/* ---------- Helpers ---------- */
-const CHART_OPTIONS_BASE = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false },
-  }
-};
+/* ---------- Constants ---------- */
+const CHART_OPTIONS_BASE = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } };
+const ADMIN_EMAIL = 'elaymemmedli27@gmail.com';
+const ADMIN_PASSWORD = 'Elsever1975';
+const BANNED_EMAIL_EXAMPLE = 'akanak@gmail.com'; // Kullanıcının istediği örnek banlı mail
 
-const safeKeyFromEmail = (email) => {
-  // email'den güvenli localStorage anahtarı üret
-  return 'dashboard_data_' + encodeURIComponent(email.toLowerCase());
-};
+/* ---------- Helpers & Storage ---------- */
+const safeKeyFromEmail = (email) => 'dashboard_data_' + encodeURIComponent(email.toLowerCase());
 
 const formatCurrency = (amount) => {
   const isNegative = amount < 0;
   const absAmount = Math.abs(amount || 0);
-  const formatted = absAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const formatted = absAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return (isNegative ? '(-' : '') + '$' + formatted + (isNegative ? ')' : '');
 };
 
 const formatCount = (count) => (count || 0).toLocaleString('tr-TR');
+const generateId = () => Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,9);
 
-const nowSecondsObj = () => ({ ms: Date.now() });
-
-const generateId = () => {
-  // yeterince benzersiz id
-  return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,9);
+/**
+ * Hesapların ne kadar süredir kayıtlı olduğunu gösteren yardımcı fonksiyon.
+ */
+const timeAgo = (timestamp) => {
+    if (!timestamp) return 'Bilinmiyor';
+    const now = Date.now();
+    const diff = now - timestamp;
+    
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    const months = Math.floor(days / 30.44); // Average days in a month
+    const years = Math.floor(days / 365.25);
+    
+    if (years > 0) return `${years} yıl önce`;
+    if (months > 0) return `${months} ay önce`;
+    if (days > 0) return `${days} gün önce`;
+    if (hours > 0) return `${hours} saat önce`;
+    if (minutes > 0) return `${minutes} dakika önce`;
+    
+    return 'Az önce';
 };
+
+
+// User storage (Extended: stores password, isAdmin, isBanned, createdAt_ms)
+const loadAllUsers = () => JSON.parse(localStorage.getItem('users_extended') || '{}');
+const saveAllUsers = (users) => localStorage.setItem('users_extended', JSON.stringify(users));
+
+/**
+ * Initializes the user database and ensures the admin user and banned example user are set up.
+ * Ensures every user has a createdAt_ms timestamp.
+ */
+function initializeUsers() {
+    let users = loadAllUsers();
+    let updated = false;
+    const now = Date.now();
+
+    // 1. Ensure Admin exists and has creation date
+    if (!users[ADMIN_EMAIL] || users[ADMIN_EMAIL].password !== ADMIN_PASSWORD || !users[ADMIN_EMAIL].isAdmin || !users[ADMIN_EMAIL].createdAt_ms) {
+        users[ADMIN_EMAIL] = { 
+            password: ADMIN_PASSWORD, 
+            isAdmin: true, 
+            isBanned: false, 
+            createdAt_ms: users[ADMIN_EMAIL]?.createdAt_ms || now // Keep old time if exists
+        };
+        updated = true;
+    }
+    
+    // 2. Ensure example user is banned and has creation date
+    if (!users[BANNED_EMAIL_EXAMPLE] || !users[BANNED_EMAIL_EXAMPLE].isBanned || !users[BANNED_EMAIL_EXAMPLE].createdAt_ms) {
+        users[BANNED_EMAIL_EXAMPLE] = { 
+            password: users[BANNED_EMAIL_EXAMPLE]?.password || 'bannedpass123', 
+            isAdmin: false, 
+            isBanned: true,
+            createdAt_ms: users[BANNED_EMAIL_EXAMPLE]?.createdAt_ms || now
+        };
+        updated = true;
+    }
+    
+    // 3. Ensure all existing users have a createdAt_ms (for older data migration)
+    Object.keys(users).forEach(email => {
+        if (!users[email].createdAt_ms) {
+            users[email].createdAt_ms = now - (Math.floor(Math.random() * 86400000 * 30)); // Rastgele bir ay öncesi
+            updated = true;
+        }
+    });
+
+    if (updated) {
+        saveAllUsers(users);
+    }
+    return users;
+}
 
 /* ---------- App State / Render ---------- */
 const root = document.getElementById('app-root');
-
 let currentUser = localStorage.getItem('current_user') || null;
+let currentView = 'dashboard'; // 'dashboard' | 'admin' | 'modal'
 
-/* ---------- Render Functions ---------- */
+/**
+ * Custom Modal implementation (Replaces window.confirm/alert)
+ */
+function showCustomModal(title, content, isConfirm = false, onConfirm, onCancel, options = {}) {
+    const backdrop = document.getElementById('custom-modal-backdrop');
+    document.getElementById('modal-title').textContent = title;
+    
+    // Set the content as raw HTML (to allow form insertion)
+    document.getElementById('modal-content').innerHTML = content;
+    
+    const confirmBtn = document.getElementById('modal-confirm-btn');
+    const cancelBtn = document.getElementById('modal-cancel-btn');
+    const modalActions = document.getElementById('modal-actions');
+    
+    // Clear previous event listeners
+    confirmBtn.onclick = null;
+    cancelBtn.onclick = null;
+    
+    const hideModal = () => { 
+        backdrop.classList.add('hidden'); 
+        // Restore default layout if it was modified for a special modal
+        modalActions.classList.remove('justify-start');
+        confirmBtn.classList.remove('hidden');
+    };
+
+    if (options.hideActions) {
+         modalActions.classList.add('hidden');
+    } else {
+         modalActions.classList.remove('hidden');
+    }
+
+
+    if (isConfirm) {
+        confirmBtn.classList.remove('hidden');
+        cancelBtn.textContent = options.cancelText || 'İptal';
+        confirmBtn.textContent = options.confirmText || 'Onayla';
+        confirmBtn.className = options.confirmClass || 'px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition';
+        
+        confirmBtn.onclick = () => { hideModal(); if (onConfirm) onConfirm(); };
+        cancelBtn.onclick = () => { hideModal(); if (onCancel) onCancel(); };
+    } else {
+        // Just an alert/info box
+        confirmBtn.classList.add('hidden');
+        cancelBtn.textContent = options.cancelText || 'Tamam';
+        modalActions.classList.remove('justify-end');
+        modalActions.classList.add('justify-start');
+        cancelBtn.onclick = hideModal;
+    }
+
+    // Custom button text handling for standard confirmations
+    if (!options.confirmText) {
+        if (title.includes('Silme')) confirmBtn.textContent = 'Sil';
+        else if (title.includes('Yasaklama')) confirmBtn.textContent = 'Yasakla';
+        else if (title.includes('Yetkilendirme')) confirmBtn.textContent = 'Yetkilendir';
+    }
+
+
+    backdrop.classList.remove('hidden');
+    // Ensure the modal box has the right size for its content
+    document.getElementById('custom-modal').classList.remove('max-w-sm');
+    document.getElementById('custom-modal').classList.add(options.maxWidth || 'max-w-lg');
+}
+
 
 function render() {
+  initializeUsers(); // Ensure admin is initialized on every render
   if (!currentUser) {
     renderLogin();
+  } else if (currentView === 'admin') {
+    renderAdminPanel();
   } else {
     renderDashboard();
   }
+}
+
+/**
+ * Switches the current user and re-renders the UI.
+ */
+function switchUser(email) {
+    localStorage.setItem('current_user', email);
+    currentUser = email;
+    render();
 }
 
 /* ---------- Login Component ---------- */
@@ -79,8 +236,17 @@ function renderLogin() {
   root.innerHTML = `
     <div class="flex items-center justify-center min-h-screen bg-gray-900 p-4">
       <div class="w-full max-w-md bg-gray-800 rounded-3xl p-8 shadow-2xl border border-gray-700/50">
-        <h2 id="login-title" class="text-3xl font-bold text-center text-emerald-400 mb-8">Hoş Geldiniz: Giriş Yapın</h2>
+        
+        <h2 id="login-title" class="text-3xl font-bold text-center text-emerald-400 mb-6">Hoş Geldiniz: Giriş Yapın</h2>
+        
+        <!-- YENİ UYARI ALANI -->
+        <div class="bg-red-800/20 border border-red-700/50 p-3 rounded-xl mb-6 text-center">
+            <p class="text-sm font-bold text-red-400">🚨 SAHTE MAIL UYARISI 🚨</p>
+            <p class="text-sm text-red-200 mt-1">Sahte mail ile girenler (örneğin: <span class="font-mono bg-red-800 p-1 rounded">ksjdjal@gmail.com</span>) **Admin Tarafından Kalıcı Olarak Banlanacaktır**.</p>
+        </div>
+        
         <p id="login-error" class="hidden p-3 rounded-lg text-sm mb-4 text-center"></p>
+        
         <form id="login-form" class="space-y-6">
           <input id="login-email" type="email" placeholder="Email Adresiniz" class="w-full px-5 py-3 bg-gray-700 text-gray-200 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-emerald-500/50 focus:border-emerald-500 transition duration-150" required />
           <input id="login-password" type="password" placeholder="Şifreniz" class="w-full px-5 py-3 bg-gray-700 text-gray-200 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-emerald-500/50 focus:border-emerald-500 transition duration-150" required />
@@ -88,11 +254,16 @@ function renderLogin() {
         </form>
         <p class="text-sm text-gray-400 mt-6 text-center">
           Hesabın yok mu? <button id="toggle-register" class="text-emerald-400 font-bold hover:text-emerald-300 transition duration-150 underline">Kayıt Ol</button>
+          <span class="mx-2">|</span> 
+          <button id="quick-switch-login" class="text-blue-400 font-bold hover:text-blue-300 transition duration-150 underline">Hızlı Giriş/Geçiş</button>
         </p>
       </div>
     </div>
   `;
 
+  // Initialize icons
+  lucide.createIcons();
+  
   const loginForm = document.getElementById('login-form');
   const loginError = document.getElementById('login-error');
   let isLogin = true;
@@ -105,6 +276,8 @@ function renderLogin() {
     document.getElementById('login-email').value = '';
     document.getElementById('login-password').value = '';
   });
+  
+  document.getElementById('quick-switch-login').addEventListener('click', renderAccountSwitchModal);
 
   loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -118,45 +291,221 @@ function renderLogin() {
       return;
     }
 
-    const users = JSON.parse(localStorage.getItem('users') || '{}');
+    const users = loadAllUsers();
 
     if (isLogin) {
-      if (users[email] && users[email] === password) {
-        localStorage.setItem('current_user', email);
-        currentUser = email;
-        render();
-      } else {
-        loginError.textContent = 'Email veya şifre yanlış! Lütfen tekrar deneyin.';
-        loginError.className = 'p-3 rounded-lg text-sm mb-4 text-center bg-red-700 text-white';
-      }
+        const userData = users[email];
+        if (userData && userData.password === password) {
+            if (userData.isBanned) {
+                showCustomModal('Giriş Engellendi', `Hesabınız geçersiz kullanım nedeniyle yasaklanmıştır. Email: ${email}`, false);
+                return;
+            }
+            switchUser(email);
+        } else {
+            loginError.textContent = 'Email veya şifre yanlış! Lütfen tekrar deneyin.';
+            loginError.className = 'p-3 rounded-lg text-sm mb-4 text-center bg-red-700 text-white';
+        }
     } else {
       // register
+      if (users[email] && users[email].isBanned) {
+         loginError.textContent = `Bu mail yasaklıdır (${email}). Lütfen başka bir mail adresi kullanın.`;
+         loginError.className = 'p-3 rounded-lg text-sm mb-4 text-center bg-red-700 text-white';
+         return;
+      }
+      
       if (users[email]) {
         loginError.textContent = 'Bu email zaten kayıtlı! Lütfen giriş yapın.';
         loginError.className = 'p-3 rounded-lg text-sm mb-4 text-center bg-red-700 text-white';
       } else {
-        users[email] = password;
-        localStorage.setItem('users', JSON.stringify(users));
-        localStorage.setItem('current_user', email);
-        currentUser = email;
-        loginError.textContent = 'Kayıt başarılı! Otomatik olarak giriş yapıldı.';
-        loginError.className = 'p-3 rounded-lg text-sm mb-4 text-center bg-green-700 text-white';
-        setTimeout(() => render(), 600);
+        // New User registration
+        const isUserBannedByExample = email === BANNED_EMAIL_EXAMPLE || email.includes('ksjdjal@gmail.com');
+        
+        users[email] = { 
+            password: password, 
+            isAdmin: false, 
+            isBanned: isUserBannedByExample, // Yeni sahte mail örneklerini de banla
+            createdAt_ms: Date.now()
+        };
+
+        saveAllUsers(users);
+        
+        if (users[email].isBanned) {
+             showCustomModal('Hesap Oluşturuldu ama Yasaklandı', `Hesabınız oluşturuldu ancak kısıtlı/sahte bir email adresi kullandığınız için otomatik olarak yasaklanmıştır. Email: ${email}. Giriş yapmak için farklı bir hesap seçiniz.`, false);
+             render();
+        } else {
+            loginError.textContent = 'Kayıt başarılı! Otomatik olarak giriş yapıldı.';
+            loginError.className = 'p-3 rounded-lg text-sm mb-4 text-center bg-green-700 text-white';
+            setTimeout(() => switchUser(email), 600);
+        }
       }
     }
   });
 }
 
+/**
+ * Renders the modal for quick account switching and registration without logging out.
+ */
+function renderAccountSwitchModal() {
+    const users = loadAllUsers();
+    const userEmails = Object.keys(users).filter(email => email !== currentUser);
+    
+    // --- User List Content ---
+    let userListHtml = '';
+    if (userEmails.length > 0) {
+        userListHtml = `
+            <div class="mb-4">
+                <p class="text-sm font-semibold text-gray-700 mb-2">Kayıtlı Hesaplar Arasında Geçiş Yap (Şifresiz):</p>
+                <div class="space-y-2 max-h-40 overflow-y-auto p-2 border rounded-lg bg-gray-50">
+                    ${userEmails.map(email => {
+                        const user = users[email];
+                        return `
+                        <button data-email="${email}" class="quick-switch-user w-full text-left px-3 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-teal-100 rounded-md shadow-sm transition duration-150 flex justify-between items-center">
+                            <span>${email}</span>
+                            ${user.isBanned ? '<span class="text-red-500 text-xs font-bold"> (Yasaklı!)</span>' : ''}
+                            <i data-lucide="log-in" class="h-4 w-4 text-teal-600"></i>
+                        </button>
+                    `;
+                    }).join('')}
+                </div>
+            </div>
+            <div class="border-t border-gray-200 pt-4 mb-4"></div>
+        `;
+    }
+
+    // --- New Account Form Content ---
+    const newAccountFormHtml = `
+        <h4 class="text-sm font-semibold text-gray-700 mb-2">Yeni Hesap Oluştur:</h4>
+        <p id="switch-error" class="hidden p-2 rounded-lg text-xs mb-3 text-center"></p>
+        <form id="new-account-form" class="space-y-3">
+            <input id="new-email" type="email" placeholder="Yeni Email Adresi" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition duration-150" required />
+            <input id="new-password" type="password" placeholder="Şifre Oluştur" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition duration-150" required />
+            <button type="submit" class="w-full py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg transition duration-200">Kayıt Ol ve Geçiş Yap</button>
+        </form>
+    `;
+
+    showCustomModal(
+        'Hesap Ekle & Hızlı Geçiş',
+        userListHtml + newAccountFormHtml,
+        false, // Not a standard confirmation
+        null, 
+        null,
+        { 
+            cancelText: 'Kapat', 
+            maxWidth: 'max-w-md' // Slightly wider modal
+        }
+    );
+    
+    // Initialize icons in the modal
+    lucide.createIcons();
+
+    // Attach quick switch listeners
+    document.querySelectorAll('.quick-switch-user').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const email = e.currentTarget.getAttribute('data-email');
+            const user = users[email];
+            
+            if (user && user.isBanned) {
+                 document.getElementById('custom-modal-backdrop').classList.add('hidden');
+                 showCustomModal('Giriş Engellendi', `Bu hesap geçersiz kullanım nedeniyle yasaklanmıştır. Email: ${email}`, false);
+                 return;
+            }
+            
+            switchUser(email);
+            document.getElementById('custom-modal-backdrop').classList.add('hidden'); // Hide modal explicitly
+        });
+    });
+
+    // Attach New Account Form Handler
+    document.getElementById('new-account-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const errorDisplay = document.getElementById('switch-error');
+        errorDisplay.className = 'hidden p-2 rounded-lg text-xs mb-3 text-center';
+        
+        const email = document.getElementById('new-email').value.trim().toLowerCase();
+        const password = document.getElementById('new-password').value;
+
+        if (!email || !password) {
+            errorDisplay.textContent = 'Email ve şifre giriniz.';
+            errorDisplay.className = 'p-2 rounded-lg text-xs mb-3 text-center bg-red-200 text-red-800';
+            return;
+        }
+
+        const users = loadAllUsers();
+        
+        if (users[email]) {
+            errorDisplay.textContent = 'Bu email zaten kayıtlı! Lütfen listeden seçin veya başka bir mail kullanın.';
+            errorDisplay.className = 'p-2 rounded-lg text-xs mb-3 text-center bg-yellow-200 text-yellow-800';
+            return;
+        }
+        
+        // Registration logic
+        const isUserBannedByExample = email === BANNED_EMAIL_EXAMPLE || email.includes('ksjdjal@gmail.com');
+        
+        users[email] = { 
+            password: password, 
+            isAdmin: false, 
+            isBanned: isUserBannedByExample, 
+            createdAt_ms: Date.now()
+        };
+        saveAllUsers(users);
+
+        if (users[email].isBanned) {
+            document.getElementById('custom-modal-backdrop').classList.add('hidden'); 
+             showCustomModal('Hesap Oluşturuldu ama Yasaklandı', `Hesabınız oluşturuldu ancak kısıtlı/sahte bir email adresi kullandığınız için otomatik olarak yasaklanmıştır. Email: ${email}. Giriş yapmak için farklı bir hesap seçiniz.`, false);
+        } else {
+            errorDisplay.textContent = 'Kayıt başarılı! Hesaba geçiş yapılıyor.';
+            errorDisplay.className = 'p-2 rounded-lg text-xs mb-3 text-center bg-green-200 text-green-800';
+            setTimeout(() => {
+                document.getElementById('custom-modal-backdrop').classList.add('hidden');
+                switchUser(email);
+            }, 600);
+        }
+    });
+}
+
+
 /* ---------- Dashboard Component ---------- */
 function renderDashboard() {
+  const users = loadAllUsers();
+  const userData = users[currentUser] || {};
+  const isCurrentUserAdmin = userData.isAdmin || false;
   const displayUserId = currentUser.split('@')[0];
+  
   root.innerHTML = `
     <div class="min-h-screen bg-gray-50 p-4 sm:p-8 font-inter">
       <header class="flex flex-col md:flex-row justify-between items-center mb-8 border-b pb-4 bg-white p-4 rounded-xl shadow-md">
         <h1 class="text-3xl sm:text-4xl font-extrabold text-teal-700 tracking-tight">Instagram SaaS Metrik Takibi</h1>
-        <div class="flex items-center space-x-4 mt-4 md:mt-0">
-          <p class="text-sm text-gray-600">Kullanıcı: <span class="font-mono text-xs bg-gray-200 p-1 rounded-md font-bold text-gray-700">${displayUserId}</span></p>
-          <button id="logout-btn" class="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 transition duration-150">Çıkış</button>
+        
+        <div class="flex items-center space-x-4 mt-4 md:mt-0 relative">
+          
+          ${isCurrentUserAdmin ? `
+          <button id="admin-panel-btn" class="px-4 py-2 bg-yellow-600 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-700 transition duration-150 flex items-center space-x-2">
+            <i data-lucide="shield" class="h-5 w-5"></i>
+            <span>Admin Panel</span>
+          </button>
+          ` : ''}
+
+          <!-- Profile Dropdown -->
+          <div class="relative inline-block text-left">
+            <button id="profile-menu-btn" class="flex items-center space-x-2 px-4 py-2 bg-teal-600 text-white font-semibold rounded-lg shadow-md hover:bg-teal-700 transition duration-150">
+                <span class="font-mono text-xs p-1 rounded-md font-bold">${displayUserId}</span>
+                <i data-lucide="chevron-down" class="h-4 w-4"></i>
+            </button>
+            <div id="profile-menu-dropdown" class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none hidden">
+              <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="profile-menu-btn">
+                <a href="#" id="view-creds-btn" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                    <i data-lucide="eye" class="h-4 w-4 mr-2 text-blue-500"></i> Şifre ve Mail Bilgileri
+                </a>
+                <a href="#" id="add-account-btn" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                    <i data-lucide="users-2" class="h-4 w-4 mr-2 text-green-500"></i> Hesap Ekle & Hızlı Geçiş
+                </a>
+                <div class="border-t border-gray-100"></div>
+                <a href="#" id="logout-btn" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50" role="menuitem">
+                    <i data-lucide="log-out" class="h-4 w-4 mr-2"></i> Tamamen Çıkış Yap
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -167,19 +516,19 @@ function renderDashboard() {
         <form id="add-data-form" class="space-y-4">
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div class="flex flex-col">
-              <label class="text-sm font-medium text-gray-700 mb-1">Gelen DM Sayısı (Adet)</label>
+              <label for="dmCount" class="text-sm font-medium text-gray-700 mb-1">Gelen DM Sayısı (Adet)</label>
               <input id="dmCount" placeholder="Örn: 45" type="number" min="0" class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition duration-150" aria-label="Gelen DM Sayısı" />
             </div>
             <div class="flex flex-col">
-              <label class="text-sm font-medium text-gray-700 mb-1">Reklam Harcaması (USD)</label>
+              <label for="adSpend" class="text-sm font-medium text-gray-700 mb-1">Reklam Harcaması (USD)</label>
               <input id="adSpend" placeholder="Örn: 50.75" type="number" step="0.01" min="0" class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-red-500 outline-none transition duration-150" aria-label="Reklam Harcaması" />
             </div>
             <div class="flex flex-col">
-              <label class="text-sm font-medium text-gray-700 mb-1">Satış Adedi (Adet)</label>
+              <label for="salesCount" class="text-sm font-medium text-gray-700 mb-1">Satış Adedi (Adet)</label>
               <input id="salesCount" placeholder="Örn: 5" type="number" min="0" class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition duration-150" aria-label="Satış Adedi" />
             </div>
             <div class="flex flex-col">
-              <label class="text-sm font-medium text-gray-700 mb-1">Elde Edilen Gelir (USD)</label>
+              <label for="revenue" class="text-sm font-medium text-gray-700 mb-1">Elde Edilen Gelir (USD)</label>
               <input id="revenue" placeholder="Örn: 249.99 veya -50.00 (Zarar)" type="number" step="0.01" class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition duration-150" aria-label="Elde Edilen Gelir" />
             </div>
           </div>
@@ -198,17 +547,185 @@ function renderDashboard() {
       </section>
     </div>
   `;
+  
+  // Initialize icons
+  lucide.createIcons();
 
-  // attach handlers
+  // Attach Profile Menu Handlers
+  const profileBtn = document.getElementById('profile-menu-btn');
+  const dropdown = document.getElementById('profile-menu-dropdown');
+  
+  profileBtn.addEventListener('click', () => {
+      dropdown.classList.toggle('hidden');
+  });
+
   document.getElementById('logout-btn').addEventListener('click', () => {
     localStorage.removeItem('current_user');
     currentUser = null;
-    render();
+    dropdown.classList.add('hidden');
+    render(); // Go back to full login screen
   });
+  
+  document.getElementById('add-account-btn').addEventListener('click', (e) => {
+    e.preventDefault();
+    dropdown.classList.add('hidden');
+    renderAccountSwitchModal();
+  });
+  
+  document.getElementById('view-creds-btn').addEventListener('click', () => {
+    const users = loadAllUsers();
+    const user = users[currentUser];
+    showCustomModal('Hesap Bilgileri', 
+        `<p class="break-words"><strong>Email:</strong> ${currentUser}</p><p><strong>Şifre:</strong> ${user ? user.password : 'Kayıtlı Değil'}</p>`, 
+        false);
+    dropdown.classList.add('hidden');
+  });
+
+  if (isCurrentUserAdmin) {
+    document.getElementById('admin-panel-btn').addEventListener('click', () => {
+        currentView = 'admin';
+        render();
+    });
+  }
 
   // init form handler and data display
   initDashboardForUser(currentUser);
 }
+
+
+/* ---------- Admin Panel Component ---------- */
+function renderAdminPanel() {
+    const users = loadAllUsers();
+    const allUsers = Object.keys(users).map(email => ({ email, ...users[email] })).filter(u => u.email !== ADMIN_EMAIL);
+
+    root.innerHTML = `
+        <div class="min-h-screen bg-gray-900 p-4 sm:p-8 font-inter">
+            <header class="flex flex-col md:flex-row justify-between items-center mb-8 border-b pb-4 bg-gray-800 p-4 rounded-xl shadow-md">
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-yellow-400 tracking-tight flex items-center space-x-3">
+                    <i data-lucide="shield-check" class="h-8 w-8"></i>
+                    <span>Admin Yönetim Paneli</span>
+                </h1>
+                <div class="mt-4 md:mt-0">
+                    <button id="back-to-dashboard-btn" class="px-4 py-2 bg-teal-600 text-white font-semibold rounded-lg shadow-md hover:bg-teal-700 transition duration-150 flex items-center space-x-2">
+                        <i data-lucide="layout-dashboard" class="h-5 w-5"></i>
+                        <span>Dashboard'a Dön</span>
+                    </button>
+                </div>
+            </header>
+
+            <div id="admin-error-container"></div>
+            
+            <section class="bg-gray-800 p-6 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-semibold text-gray-100 mb-4">Kullanıcı Yönetimi</h2>
+                <div class="overflow-x-auto rounded-lg border border-gray-700">
+                    <table class="min-w-full divide-y divide-gray-700">
+                        <thead class="bg-gray-700">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Email</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Durum</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Admin</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Kayıt Süresi</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-list-body" class="bg-gray-800 divide-y divide-gray-700">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    `;
+
+    // Initialize icons
+    lucide.createIcons();
+    
+    document.getElementById('back-to-dashboard-btn').addEventListener('click', () => {
+        currentView = 'dashboard';
+        render();
+    });
+
+    const userListBody = document.getElementById('user-list-body');
+    
+    // Logic for Admin actions
+    const handleAdminAction = (targetEmail, actionType) => {
+        const users = loadAllUsers();
+        if (!users[targetEmail]) {
+            showCustomModal('Hata', 'Kullanıcı bulunamadı.', false);
+            return;
+        }
+
+        let title, content, confirmAction;
+
+        if (actionType === 'toggleBan') {
+            const isCurrentlyBanned = users[targetEmail].isBanned;
+            title = isCurrentlyBanned ? 'Yasaklama Kaldırma Onayı' : 'Kullanıcı Yasaklama Onayı';
+            content = isCurrentlyBanned 
+                ? `<strong>${targetEmail}</strong> kullanıcısının yasağını **kalıcı olarak** kaldırmak istediğinizden emin misiniz?` 
+                : `<strong>${targetEmail}</strong> kullanıcısını **kalıcı olarak** yasaklamak istediğinizden emin misiniz? Kullanıcının girişi sizin açmanız dışında engellenecektir.`;
+            confirmAction = () => {
+                users[targetEmail].isBanned = !isCurrentlyBanned;
+                saveAllUsers(users);
+                renderAdminPanel();
+            };
+        } else if (actionType === 'toggleAdmin') {
+            const isCurrentlyAdmin = users[targetEmail].isAdmin;
+            title = isCurrentlyAdmin ? 'Admin Yetkisi Kaldırma Onayı' : 'Admin Yetkisi Verme Onayı';
+            content = isCurrentlyAdmin
+                ? `<strong>${targetEmail}</strong> kullanıcısının Admin yetkisini kaldırmak istediğinizden emin misiniz?`
+                : `<strong>${targetEmail}</strong> kullanıcısına Admin yetkisi vermek istediğinizden emin misiniz? Çok dikkatli olun!`;
+            confirmAction = () => {
+                users[targetEmail].isAdmin = !isCurrentlyAdmin;
+                saveAllUsers(users);
+                renderAdminPanel();
+            };
+        }
+
+        showCustomModal(title, content, true, confirmAction);
+    };
+
+    // Render User List Table
+    allUsers.forEach(user => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-700 transition duration-150';
+        
+        const statusBadge = user.isBanned 
+            ? '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-800 text-red-100">Yasaklı</span>'
+            : '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-800 text-green-100">Aktif</span>';
+
+        const adminBadge = user.isAdmin 
+            ? '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-600 text-yellow-100">Admin</span>'
+            : '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-500 text-gray-100">Kullanıcı</span>';
+            
+        const userRegisteredTime = timeAgo(user.createdAt_ms);
+
+
+        row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-300 break-words">${user.email}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${adminBadge}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">${userRegisteredTime}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                <button data-action="toggleBan" data-email="${user.email}" class="action-btn text-sm font-semibold p-2 rounded-md transition duration-150 ${user.isBanned ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'}">
+                    ${user.isBanned ? 'Yasağı Kaldır' : 'Yasakla'}
+                </button>
+                <button data-action="toggleAdmin" data-email="${user.email}" class="action-btn text-sm font-semibold p-2 rounded-md transition duration-150 ${user.isAdmin ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-yellow-500 hover:bg-yellow-600 text-white'}">
+                    ${user.isAdmin ? 'Adminliği Al' : 'Admin Yap'}
+                </button>
+            </td>
+        `;
+        userListBody.appendChild(row);
+    });
+
+    // Attach Action Handlers
+    userListBody.querySelectorAll('.action-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const action = e.currentTarget.getAttribute('data-action');
+            const email = e.currentTarget.getAttribute('data-email');
+            handleAdminAction(email, action);
+        });
+    });
+}
+
 
 /* ---------- Dashboard Logic (per-user store) ---------- */
 function initDashboardForUser(email) {
@@ -228,8 +745,6 @@ function initDashboardForUser(email) {
 
   // Chart setup
   const chartArea = document.getElementById('chart-area');
-  chartArea.innerHTML = '<canvas id="metric-chart" class="p-2 w-full h-full"></canvas>';
-  const canvas = document.getElementById('metric-chart');
   let chart = null;
 
   const aggregateChartData = () => {
@@ -244,23 +759,32 @@ function initDashboardForUser(email) {
       { title: 'Toplam Satış Adedi', value: totalSales, type: 'count' },
       { title: 'Toplam Gelir (USD)', value: totalRevenue, type: 'currency_positive' },
       { title: 'Toplam Net Kâr (USD)', value: netProfit, type: 'currency_net' },
-    ].filter(d => d.value !== 0);
+    ].filter(d => d.value !== 0); // Sadece sıfır olmayan değerleri grafiğe dahil et
   };
 
   const renderChart = () => {
     const chartData = aggregateChartData();
-    if (!canvas) return;
+    const chartCanvas = document.getElementById('metric-chart'); 
+    
+    if (!chartCanvas) { 
+        // chartArea'yı sıfırla ve yeni canvas'ı ekle (renderDashboard'dan sonra çağrıldığından emin ol)
+        chartArea.innerHTML = '<canvas id="metric-chart" class="p-2 w-full h-full"></canvas>';
+        // chartCanvas'ı tekrar al
+        const newCanvas = document.getElementById('metric-area');
+        if (!newCanvas) return; // Hala yoksa çık
+    }
+    
     if (chart) { chart.destroy(); chart = null; }
 
-    if (chartData.length === 0) {
+    if (chartData.length === 0 || chartData.every(d => d.value === 0)) {
       chartArea.innerHTML = `<div class="text-center py-10 text-gray-500 border-2 border-dashed border-gray-300 rounded-lg">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="mx-auto h-8 w-8 mb-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="mx-auto h-8 w-8 mb-3 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
         <p>Henüz veri eklenmedi. Takibi başlatmak için yukarıdaki formu kullanın!</p>
       </div>`; 
       return;
     }
 
-    // re-add canvas (to ensure correct size)
+    // re-add canvas to prevent resize issues
     chartArea.innerHTML = '<canvas id="metric-chart" class="p-2 w-full h-full"></canvas>';
     const ctx = document.getElementById('metric-chart').getContext('2d');
 
@@ -289,11 +813,13 @@ function initDashboardForUser(email) {
                 if (label) label += ': ';
                 const value = context.parsed.y;
                 const metricType = chartData[context.dataIndex]?.type;
+                
                 if (metricType && metricType.startsWith('currency')) {
                   const sign = value < 0 ? '-' : '';
                   const absValue = Math.abs(value);
                   return label + sign + '$' + absValue.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 }
+                
                 return label + value.toLocaleString('tr-TR');
               }
             }
@@ -306,13 +832,17 @@ function initDashboardForUser(email) {
 
   const renderTable = () => {
     const tableArea = document.getElementById('table-area');
-    if (data.length === 0) {
+    // En yeni kayıtlar üstte olsun diye ters çeviriyoruz
+    const sortedData = [...data].reverse();
+
+    if (sortedData.length === 0) {
       tableArea.innerHTML = `<div class="text-center py-4 text-gray-500"><p>Listelenecek kayıt bulunamadı.</p></div>`;
       return;
     }
 
-    const rows = data.map(item => {
+    const rows = sortedData.map(item => {
       const dateStr = item.createdAt_ms ? new Date(item.createdAt_ms).toLocaleString('tr-TR') : 'Yükleniyor...';
+      const netProfit = (Number(item.revenue) || 0) - (Number(item.adSpend) || 0);
       return `
         <tr class="hover:bg-gray-50 transition duration-150">
           <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-500">${dateStr}</td>
@@ -320,6 +850,7 @@ function initDashboardForUser(email) {
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">${formatCurrency(item.adSpend)}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">${formatCount(item.salesCount)}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono font-semibold ${Number(item.revenue) < 0 ? 'text-red-600' : 'text-emerald-600'}">${formatCurrency(item.revenue)}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono font-bold ${netProfit < 0 ? 'text-red-700' : 'text-teal-700'}">${formatCurrency(netProfit)}</td>
           <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
             <button data-id="${item.id}" class="delete-btn text-red-600 hover:text-red-800 font-semibold transition duration-150 p-1 rounded-md">Sil</button>
           </td>
@@ -337,6 +868,7 @@ function initDashboardForUser(email) {
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reklam Harc. (USD)</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Satış Adedi</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Elde Edilen Gelir (USD)</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GÜNLÜK NET KÂR (USD)</th>
               <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
             </tr>
           </thead>
@@ -352,9 +884,14 @@ function initDashboardForUser(email) {
       btn.addEventListener('click', (e) => {
         const id = e.currentTarget.getAttribute('data-id');
         if (!id) return;
-        data = data.filter(d => d.id !== id);
-        saveData(data);
-        refreshUI();
+        
+        showCustomModal('Kayıt Silme Onayı', 'Bu günlük metrik kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.', true, 
+            () => {
+                data = data.filter(d => d.id !== id);
+                saveData(data);
+                refreshUI();
+            }
+        );
       });
     });
   };
@@ -416,9 +953,11 @@ function initDashboardForUser(email) {
   });
 }
 
-/* ---------- Start ---------- */
+
+/* ---------- Start App Flow ---------- */
 render();
 
 </script>
 </body>
 </html>
+
