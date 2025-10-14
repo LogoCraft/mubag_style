@@ -1,677 +1,160 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instagram SaaS Metrik Takip Paneli</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Inter Font -->
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MuLink Dashboard</title>
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background: #f6f8fb;
+      margin: 0;
+      padding: 0;
+      color: #222;
+    }
+
+    header {
+      background: #18181b;
+      color: white;
+      padding: 1.2rem 2rem;
+      font-size: 1.4rem;
+      font-weight: 600;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 2rem auto;
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+    }
+
+    h2 {
+      margin-top: 0;
+      font-size: 1.4rem;
+      color: #333;
+    }
+
+    form {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    input {
+      flex: 1;
+      padding: 0.8rem;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      outline: none;
+      font-size: 1rem;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 0.8rem 1.2rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #1e40af;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      padding: 0.8rem 1rem;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      margin-bottom: 0.6rem;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .delete {
+      background: #ef4444;
+      padding: 0.4rem 0.8rem;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .delete:hover {
+      background: #b91c1c;
+    }
+  </style>
 </head>
 <body>
-
-    <!-- Uygulamanın temel container'ı -->
-    <div id="app-root" class="min-h-screen">
-        <!-- İçerik buraya JavaScript tarafından yüklenecektir -->
-        <div class="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-            <div class="text-xl font-semibold text-teal-600">Uygulama Başlatılıyor...</div>
-        </div>
-    </div>
-
-    <!-- Firebase ve Chart.js Yüklemeleri ile Uygulama Mantığı -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-    
-    <script type="module">
-        // Firebase Modülleri (Sadece bir kez yüklenir)
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, onSnapshot, addDoc, serverTimestamp, deleteDoc, doc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Global State (React'taki useState yerine)
-        let currentUserEmail = localStorage.getItem('current_user') || null;
-        let userId = null;
-        let data = []; // Firestore'dan gelen metrik kayıtları
-        let loading = true;
-        let appError = null;
-
-        // Firebase ve Chart.js Instance'ları
-        let app = null;
-        let db = null;
-        let auth = null;
-        let chartInstance = null;
-        let unsubscribeFirestore = null;
-
-        // DOM Elementi
-        const appRoot = document.getElementById('app-root');
-
-        // --- 1. Utility Functions (Yardımcı İşlevler) ---
-
-        const formatCurrency = (amount) => {
-            const isNegative = amount < 0;
-            const absAmount = Math.abs(amount || 0);
-            const formatted = absAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            return (isNegative ? '(-' : '') + '$' + formatted + (isNegative ? ')' : '');
-        };
-        
-        const formatCount = (count) => {
-            return (count || 0).toLocaleString('tr-TR');
-        };
-
-        const formatDate = (timestamp) => {
-            if (!timestamp) return 'Yükleniyor...';
-            // Firestore timestamp'ı milisaniyeye çevirip formatlar
-            return new Date(timestamp.seconds * 1000).toLocaleString('tr-TR');
-        };
-
-        // --- 2. Firebase & Auth Initialization (Başlatma) ---
-
-        const initFirebase = async () => {
-            try {
-                // setLogLevel('debug'); // Gerekirse debug seviyesini açabilirsiniz
-
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const firebaseConfig = typeof __firebase_config !== 'undefined' && __firebase_config ? JSON.parse(__firebase_config) : {};
-                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-                if (Object.keys(firebaseConfig).length === 0) {
-                    throw new Error("Firebase config not available. Cannot connect to database.");
-                }
-
-                // Uygulamayı başlat
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                // Giriş yap (Özel Token veya Anonim)
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                // Auth durumunu dinle
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                    } else {
-                        userId = null;
-                    }
-                    loading = false;
-                    renderApp(); // Auth durumu değiştiğinde uygulamayı yeniden çiz
-                });
-
-            } catch (e) {
-                console.error("Firebase setup error:", e);
-                appError = `Firebase Kurulum Hatası: ${e.message}`;
-                loading = false;
-                renderApp();
-            }
-        };
-
-        // --- 3. Firestore Listener (Gerçek Zamanlı Veri Dinleme) ---
-
-        const setupFirestoreListener = (currentUserId) => {
-            if (unsubscribeFirestore) {
-                unsubscribeFirestore(); // Önceki dinleyiciyi temizle
-            }
-
-            if (!db || !currentUserId) return;
-
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            // /artifacts/{appId}/users/{userId}/dashboard_data
-            const dataCollectionPath = `artifacts/${appId}/users/${currentUserId}/dashboard_data`;
-            const dataCollection = collection(db, dataCollectionPath);
-
-            const q = query(dataCollection);
-
-            unsubscribeFirestore = onSnapshot(q, (snapshot) => {
-                const liveData = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                })).sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0)); // Oluşturulma zamanına göre sırala
-
-                data = liveData;
-                // Veri değiştiğinde sadece Dashboard'u yeniden çiz
-                if (currentUserEmail) {
-                    renderDashboard();
-                }
-            }, (e) => {
-                console.error("Firestore listen error:", e);
-                appError = `Firestore Dinleme Hatası: ${e.message}`;
-                renderDashboard();
-            });
-        };
-        
-        // --- 4. Data CRUD Operations (Veri Ekleme/Silme) ---
-
-        const addData = async (e) => {
-            e.preventDefault();
-            
-            const form = e.target;
-            const dmCount = form.elements.dmCount.value;
-            const adSpend = form.elements.adSpend.value;
-            const salesCount = form.elements.salesCount.value;
-            const revenue = form.elements.revenue.value;
-            
-            if (!db || !userId) {
-                appError = "Uygulama hazır değil. Lütfen başlatılmasını bekleyin."; 
-                renderDashboard();
-                return;
-            }
-
-            // Sayısal değerlere dönüştür
-            const dm = parseInt(dmCount, 10) || 0;
-            const ad = parseFloat(adSpend) || 0;
-            const sales = parseInt(salesCount, 10) || 0;
-            const rev = parseFloat(revenue) || 0;
-            
-            // Kontroller
-            if (dm === 0 && ad === 0 && sales === 0 && rev === 0) {
-                appError = "Lütfen en az bir metrik değeri girin."; 
-                renderDashboard();
-                return;
-            }
-            if (dm < 0 || sales < 0 || ad < 0) {
-                appError = "DM Sayısı, Satış Adedi ve Reklam Harcaması negatif olamaz.";
-                renderDashboard();
-                return;
-            }
-            
-            appError = null; // Başarılıysa hatayı temizle
-
-            try {
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const dataCollectionPath = `artifacts/${appId}/users/${userId}/dashboard_data`;
-                const dataCollection = collection(db, dataCollectionPath);
-
-                await addDoc(dataCollection, {
-                    dmCount: dm,
-                    adSpend: ad,
-                    salesCount: sales,
-                    revenue: rev,
-                    createdAt: serverTimestamp() 
-                });
-
-                // Formu temizle
-                form.reset();
-            } catch (e) {
-                console.error("Error adding document:", e);
-                appError = `Veri eklenirken hata oluştu: ${e.message}`; 
-                renderDashboard();
-            }
-        };
-
-        const deleteData = async (id) => {
-            if (!db || !userId) {
-                appError = "Uygulama hazır değil. Lütfen bekleyin.";
-                renderDashboard();
-                return;
-            }
-
-            try {
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const dataCollectionPath = `artifacts/${appId}/users/${userId}/dashboard_data`;
-                const docRef = doc(db, dataCollectionPath, id);
-                
-                await deleteDoc(docRef);
-                // onSnapshot otomatik olarak güncelleyeceği için ek bir state güncellemesine gerek yok.
-            } catch (e) {
-                console.error("Error deleting document:", e);
-                appError = `Veri silinirken hata oluştu: ${e.message}`;
-                renderDashboard();
-            }
-        };
-        
-        // --- 5. Chart Rendering (Grafik Çizimi) ---
-
-        const aggregateChartData = () => {
-            const totalDm = data.reduce((sum, item) => sum + (item.dmCount || 0), 0);
-            const totalAdSpend = data.reduce((sum, item) => sum + (item.adSpend || 0), 0);
-            const totalSales = data.reduce((sum, item) => sum + (item.salesCount || 0), 0);
-            const totalRevenue = data.reduce((sum, item) => sum + (item.revenue || 0), 0);
-            // Yeni Metrik: Net Kâr (Toplam Gelir - Toplam Reklam Harcaması)
-            const netProfit = totalRevenue - totalAdSpend; 
-
-            return [
-                { title: 'Toplam DM Sayısı', value: totalDm, type: 'count' },
-                { title: 'Toplam Reklam Harcaması (USD)', value: totalAdSpend, type: 'currency_negative' }, 
-                { title: 'Toplam Satış Adedi', value: totalSales, type: 'count' },
-                { title: 'Toplam Gelir (USD)', value: totalRevenue, type: 'currency_positive' }, 
-                { title: 'Toplam Net Kâr (USD)', value: netProfit, type: 'currency_net' },
-            ].filter(d => d.value !== 0);
-        };
-
-        const renderChart = (chartData) => {
-            const canvas = document.getElementById('metric-chart');
-            if (!canvas) return;
-
-            if (chartInstance) {
-                chartInstance.destroy();
-                chartInstance = null;
-            }
-
-            if (chartData.length === 0) return;
-
-            // Grafik renklerini değerin negatif/pozitif olmasına göre ayarlayalım
-            const backgroundColors = chartData.map(d => {
-                if (d.title.includes('Kâr')) { 
-                    return d.value >= 0 ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)'; // Yeşil/Kırmızı
-                }
-                if (d.title.includes('Reklam Harcaması')) {
-                    return 'rgba(248, 113, 113, 0.8)'; // Kırmızı
-                }
-                if (d.title.includes('Gelir')) {
-                    return d.value >= 0 ? 'rgba(52, 211, 153, 0.8)' : 'rgba(251, 191, 36, 0.8)'; // Zümrüt/Sarı
-                }
-                return 'rgba(6, 182, 212, 0.8)'; // Diğerleri (DM, Satış) için Teal
-            });
-
-
-            const ctx = canvas.getContext('2d');
-            chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: chartData.map(d => d.title),
-                    datasets: [{ 
-                        label: 'Toplam Metrik Değeri', 
-                        data: chartData.map(d => d.value), 
-                        backgroundColor: backgroundColors,
-                        borderColor: 'rgb(4, 140, 165)',
-                        borderWidth: 1
-                    }]
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    const value = context.parsed.y;
-                                    const metricType = chartData[context.dataIndex]?.type;
-
-                                    if (metricType && metricType.startsWith('currency')) {
-                                        const sign = value < 0 ? '-' : '';
-                                        const absValue = Math.abs(value);
-                                        return label + sign + '$' + absValue.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                                    }
-                                    return label + value.toLocaleString('tr-TR');
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: false 
-                        }
-                    }
-                }
-            });
-        };
-
-        // --- 6. Component Rendering Functions (UI Çizimi) ---
-
-        const renderLogin = () => {
-            const isLogin = appRoot.dataset.mode !== 'register'; // Basit mod yönetimi
-            appError = null; // Giriş ekranında Firebase hatasını gizle
-
-            const loginHTML = `
-                <div class="flex items-center justify-center min-h-screen bg-gray-900 p-4">
-                    <div class="w-full max-w-md bg-gray-800 rounded-3xl p-8 shadow-2xl border border-gray-700/50">
-                        <h2 class="text-3xl font-bold text-center text-emerald-400 mb-8">
-                            ${isLogin ? 'Hoş Geldiniz: Giriş Yapın' : 'Yeni Hesap Oluştur'}
-                        </h2>
-                        <p id="login-error-message" class="hidden p-3 rounded-lg text-sm mb-4 text-center text-white"></p>
-                        <form id="login-form" class="space-y-6">
-                            <input 
-                                id="login-email"
-                                type="email" 
-                                placeholder="Email Adresiniz"
-                                class="w-full px-5 py-3 bg-gray-700 text-gray-200 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-emerald-500/50 focus:border-emerald-500 transition duration-150"
-                                required
-                            />
-                            <input 
-                                id="login-password"
-                                type="password" 
-                                placeholder="Şifreniz"
-                                class="w-full px-5 py-3 bg-gray-700 text-gray-200 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-emerald-500/50 focus:border-emerald-500 transition duration-150"
-                                required
-                            />
-                            <button 
-                                type="submit" 
-                                class="w-full py-3 mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-lg rounded-xl shadow-lg shadow-emerald-500/30 transition duration-200 transform hover:scale-[1.01]"
-                            >
-                                ${isLogin ? 'Giriş Yap' : 'Kayıt Ol ve Başla'}
-                            </button>
-                        </form>
-                        <p class="text-sm text-gray-400 mt-6 text-center">
-                            ${isLogin ? 'Hesabın yok mu?' : 'Zaten hesabın var mı?'}
-                            <button id="toggle-mode" class="text-emerald-400 font-bold hover:text-emerald-300 transition duration-150 underline">
-                                ${isLogin ? 'Kayıt Ol' : 'Giriş Yap'}
-                            </button>
-                        </p>
-                    </div>
-                </div>
-            `;
-            appRoot.innerHTML = loginHTML;
-            
-            // Event Listener'ları ata
-            document.getElementById('toggle-mode').addEventListener('click', () => {
-                appRoot.dataset.mode = isLogin ? 'register' : 'login';
-                renderLogin();
-            });
-
-            document.getElementById('login-form').addEventListener('submit', handleLogin);
-        };
-
-        const handleLogin = (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            const isLogin = appRoot.dataset.mode !== 'register';
-            const errorElement = document.getElementById('login-error-message');
-            
-            let loginError = null;
-
-            if (!email || !password) {
-                loginError = 'Email ve şifre giriniz!';
-            } else {
-                const users = JSON.parse(localStorage.getItem('users')) || {};
-                
-                if (isLogin) {
-                    if (users[email] && users[email] === password) {
-                        localStorage.setItem('current_user', email);
-                        currentUserEmail = email;
-                        renderApp(); 
-                        return; // Başarılı giriş
-                    } else {
-                        loginError = 'Email veya şifre yanlış! Lütfen tekrar deneyin.';
-                    }
-                } else {
-                    if (users[email]) {
-                        loginError = 'Bu email zaten kayıtlı! Lütfen giriş yapın.';
-                    } else {
-                        users[email] = password;
-                        localStorage.setItem('users', JSON.stringify(users));
-                        
-                        localStorage.setItem('current_user', email);
-                        currentUserEmail = email;
-                        loginError = 'Kayıt başarılı! Otomatik olarak giriş yapıldı.';
-                        renderApp();
-                        return; // Başarılı kayıt
-                    }
-                }
-            }
-            
-            // Hata mesajını göster
-            errorElement.textContent = loginError;
-            errorElement.className = `p-3 rounded-lg text-sm mb-4 text-center ${loginError.includes('başarılı') ? 'bg-green-700 text-white' : 'bg-red-700 text-white'}`;
-            errorElement.style.display = 'block';
-
-            if (loginError.includes('başarılı')) {
-                setTimeout(() => {
-                    errorElement.style.display = 'none';
-                }, 3000);
-            }
-        };
-
-        const handleLogout = () => {
-            localStorage.removeItem('current_user');
-            currentUserEmail = null;
-            if (auth && auth.currentUser) {
-                signOut(auth); // Firebase oturumunu da kapat (anonim olsa bile)
-            }
-            renderApp();
-        };
-
-
-        const renderDashboard = () => {
-            if (loading) {
-                appRoot.innerHTML = `
-                    <div class="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-                        <div class="text-xl font-semibold text-teal-600">Kontrol Paneli Yükleniyor ve Veritabanı Bağlanıyor...</div>
-                    </div>
-                `;
-                return;
-            }
-            
-            // Firebase Listener'ı sadece Dashboard aktifken ve userId varken başlat
-            if (userId && !unsubscribeFirestore) {
-                setupFirestoreListener(userId);
-            }
-
-
-            const chartData = aggregateChartData();
-            const displayUserId = currentUserEmail ? currentUserEmail.split('@')[0] : 'Misafir';
-
-            let tableRowsHTML = data.length > 0 ? data.map(item => {
-                const rowClass = 'hover:bg-gray-50 transition duration-150';
-                const revenueClass = item.revenue < 0 ? 'text-red-600' : 'text-emerald-600';
-                
-                return `
-                    <tr class="${rowClass}">
-                        <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
-                            ${formatDate(item.createdAt)}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">
-                            ${formatCount(item.dmCount)}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">
-                            ${formatCurrency(item.adSpend)}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">
-                            ${formatCount(item.salesCount)}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono font-semibold ${revenueClass}">
-                            ${formatCurrency(item.revenue)}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button 
-                                data-doc-id="${item.id}"
-                                class="delete-btn text-red-600 hover:text-red-800 font-semibold transition duration-150 p-1 rounded-md"
-                                aria-label="Kaydı sil"
-                            >
-                                Sil
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('') : `
-                <tr>
-                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">
-                        Listelenecek kayıt bulunamadı.
-                    </td>
-                </tr>
-            `;
-
-            const errorHTML = appError ? `
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
-                    <p class="font-bold">Hata:</p> 
-                    <p class="text-sm">${appError}</p>
-                </div>
-            ` : '';
-
-            const dashboardHTML = `
-                <div class="min-h-screen bg-gray-50 p-4 sm:p-8 font-inter">
-                    
-                    <!-- Header -->
-                    <header class="flex flex-col md:flex-row justify-between items-center mb-8 border-b pb-4 bg-white p-4 rounded-xl shadow-md">
-                        <h1 class="text-3xl sm:text-4xl font-extrabold text-teal-700 tracking-tight">
-                            Instagram SaaS Metrik Takibi 
-                        </h1>
-                        <div class="flex items-center space-x-4 mt-4 md:mt-0">
-                            <p class="text-sm text-gray-600">
-                                Kullanıcı: <span class="font-mono text-xs bg-gray-200 p-1 rounded-md font-bold text-gray-700">${displayUserId}</span>
-                            </p>
-                            <button 
-                                id="logout-btn"
-                                class="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 transition duration-150"
-                            >
-                                Çıkış
-                            </button>
-                        </div>
-                    </header>
-
-                    ${errorHTML}
-
-                    <!-- Data Input Form - Structured Metrics -->
-                    <section class="bg-white p-6 rounded-xl shadow-lg mb-8">
-                        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Günlük Metrik Girişi</h2> 
-                        <form id="add-data-form" class="space-y-4">
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                
-                                <div class="flex flex-col">
-                                    <label class="text-sm font-medium text-gray-700 mb-1">Gelen DM Sayısı (Adet)</label>
-                                    <input 
-                                        name="dmCount"
-                                        placeholder="Örn: 45" 
-                                        type="number" 
-                                        min="0"
-                                        class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition duration-150" 
-                                        aria-label="Gelen DM Sayısı" 
-                                    />
-                                </div>
-                                
-                                <div class="flex flex-col">
-                                    <label class="text-sm font-medium text-gray-700 mb-1">Reklam Harcaması (USD)</label>
-                                    <input 
-                                        name="adSpend"
-                                        placeholder="Örn: 50.75" 
-                                        type="number" 
-                                        step="0.01"
-                                        min="0"
-                                        class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-red-500 outline-none transition duration-150" 
-                                        aria-label="Reklam Harcaması" 
-                                    />
-                                </div>
-                                
-                                <div class="flex flex-col">
-                                    <label class="text-sm font-medium text-gray-700 mb-1">Satış Adedi (Adet)</label>
-                                    <input 
-                                        name="salesCount"
-                                        placeholder="Örn: 5" 
-                                        type="number" 
-                                        min="0"
-                                        class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition duration-150" 
-                                        aria-label="Satış Adedi" 
-                                    />
-                                </div>
-                                
-                                <div class="flex flex-col">
-                                    <label class="text-sm font-medium text-gray-700 mb-1">Elde Edilen Gelir (USD)</label>
-                                    <input 
-                                        name="revenue"
-                                        placeholder="Örn: 249.99 veya -50.00 (Zarar)" 
-                                        type="number" 
-                                        step="0.01"
-                                        class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition duration-150" 
-                                        aria-label="Elde Edilen Gelir" 
-                                    />
-                                </div>
-                            </div>
-                            
-                            <button 
-                                type="submit" 
-                                class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-teal-500 focus:ring-opacity-50 mt-4"
-                            >
-                                Metrikleri Kaydet
-                            </button>
-                        </form>
-                    </section>
-
-                    <!-- Data Visualization - Grafik -->
-                    <section class="bg-white p-6 rounded-xl shadow-lg mb-8">
-                        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Toplam Metrik Görselleştirmesi (Net Kâr dahil)</h2> 
-                        
-                        ${chartData.length > 0 ? `
-                            <div class="w-full h-[400px] max-h-screen">
-                                <canvas id="metric-chart" class="p-2"></canvas>
-                            </div>
-                        ` : `
-                            <div class="text-center py-10 text-gray-500 border-2 border-dashed border-gray-300 rounded-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto h-8 w-8 mb-3"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
-                                <p>Henüz veri eklenmedi. Takibi başlatmak için yukarıdaki formu kullanın!</p>
-                            </div>
-                        `}
-                    </section>
-
-                    <!-- Data Table - Tablo Görünümü -->
-                    <section class="bg-white p-6 rounded-xl shadow-lg">
-                        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Detaylı Kayıtlar (Günlük Bazda)</h2>
-                        
-                        <div class="overflow-x-auto rounded-lg border border-gray-200">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kayıt Zamanı</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gelen DM</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reklam Harc. (USD)</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Satış Adedi</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Elde Edilen Gelir (USD)</th>
-                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200" id="data-table-body">
-                                    ${tableRowsHTML}
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
-                </div>
-            `;
-            
-            appRoot.innerHTML = dashboardHTML;
-            
-            // Event Listener'ları ata
-            document.getElementById('logout-btn').addEventListener('click', handleLogout);
-            document.getElementById('add-data-form').addEventListener('submit', addData);
-
-            // Silme butonlarına event listener ata
-            document.querySelectorAll('.delete-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const docId = e.target.getAttribute('data-doc-id');
-                    if (docId) {
-                        deleteData(docId);
-                    }
-                });
-            });
-
-            // Grafik çizimini çağır
-            if (chartData.length > 0) {
-                renderChart(chartData);
-            }
-        };
-
-
-        // --- 7. Main Application Render (Ana Uygulama Çizimi) ---
-
-        const renderApp = () => {
-            if (currentUserEmail) {
-                renderDashboard();
-            } else {
-                renderLogin();
-            }
-        };
-
-        // Uygulamayı Başlat
-        window.onload = () => {
-            initFirebase();
-            renderApp(); // İlk yüklemede UI'ı çiz
-        };
-
-    </script>
+  <header>MuLink Dashboard</header>
+  <div class="container">
+    <h2>Mağaza Ürünleri</h2>
+
+    <form id="addForm">
+      <input type="text" id="productInput" placeholder="Ürün adını girin..." required />
+      <button type="submit">Ekle</button>
+    </form>
+
+    <ul id="productList"></ul>
+  </div>
+
+  <script>
+    const form = document.getElementById("addForm");
+    const input = document.getElementById("productInput");
+    const list = document.getElementById("productList");
+
+    // localStorage'dan ürünleri yükle
+    function loadProducts() {
+      const products = JSON.parse(localStorage.getItem("products")) || [];
+      list.innerHTML = "";
+      products.forEach((item, index) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          ${item}
+          <button class="delete" data-index="${index}">Sil</button>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    // ürün ekleme
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const val = input.value.trim();
+      if (!val) return;
+      const products = JSON.parse(localStorage.getItem("products")) || [];
+      products.push(val);
+      localStorage.setItem("products", JSON.stringify(products));
+      input.value = "";
+      loadProducts();
+    });
+
+    // ürün silme
+    list.addEventListener("click", (e) => {
+      if (e.target.classList.contains("delete")) {
+        const index = e.target.dataset.index;
+        const products = JSON.parse(localStorage.getItem("products")) || [];
+        products.splice(index, 1);
+        localStorage.setItem("products", JSON.stringify(products));
+        loadProducts();
+      }
+    });
+
+    loadProducts(); // başlangıçta listeyi göster
+  </script>
 </body>
 </html>
