@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mubag Style | Exclusive Bags</title>
     
+    <!-- Favicon Hatası Çözümü -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👜</text></svg>">
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -106,7 +109,7 @@
                 </div>
                 
                 <!-- Sepet İkonu -->
-                <button onclick="openCart()" class="relative p-2 text-brand-dark hover:text-brand-red transition group">
+                <button onclick="window.openCart()" class="relative p-2 text-brand-dark hover:text-brand-red transition group">
                     <i class="fa-solid fa-bag-shopping text-2xl"></i>
                     <span id="cart-count" class="absolute top-0 right-0 w-5 h-5 bg-brand-red text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white transform scale-0 transition-transform duration-200">0</span>
                 </button>
@@ -146,18 +149,18 @@
     <!-- Footer & Admin Trigger -->
     <footer class="mt-12 py-8 text-center text-gray-400 text-sm bg-white/50 backdrop-blur-sm border-t border-red-50">
         <p>&copy; 2025 Mubag_Style</p>
-        <button onclick="toggleAdminAuth()" class="mt-4 p-4 hover:text-brand-red transition opacity-40 hover:opacity-100">
+        <button onclick="window.toggleAdminAuth()" class="mt-4 p-4 hover:text-brand-red transition opacity-40 hover:opacity-100">
             <i class="fa-solid fa-lock"></i> Admin
         </button>
     </footer>
 
     <!-- 1. ÜRÜN DETAY MODALI -->
     <div id="product-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-        <div class="absolute inset-0 modal-backdrop" onclick="closeModal('product-modal')"></div>
+        <div class="absolute inset-0 modal-backdrop" onclick="window.closeModal('product-modal')"></div>
         
         <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl relative z-10 overflow-hidden transform scale-90 opacity-0 transition-all duration-300" id="product-modal-card">
             
-            <button onclick="closeModal('product-modal')" class="absolute top-4 right-4 z-20 w-10 h-10 bg-white/80 backdrop-blur rounded-full flex items-center justify-center hover:bg-red-50 hover:text-red-600 transition shadow-sm">
+            <button onclick="window.closeModal('product-modal')" class="absolute top-4 right-4 z-20 w-10 h-10 bg-white/80 backdrop-blur rounded-full flex items-center justify-center hover:bg-red-50 hover:text-red-600 transition shadow-sm">
                 <i class="fa-solid fa-times text-lg"></i>
             </button>
 
@@ -165,10 +168,10 @@
                 <img id="modal-main-img" src="" class="w-full h-full object-cover transition-transform duration-500" alt="Product">
                 
                 <div id="gallery-controls" class="hidden">
-                    <button onclick="prevImage()" class="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 rounded-full shadow flex items-center justify-center hover:bg-white">
+                    <button onclick="window.prevImage()" class="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 rounded-full shadow flex items-center justify-center hover:bg-white">
                         <i class="fa-solid fa-chevron-left text-gray-800"></i>
                     </button>
-                    <button onclick="nextImage()" class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 rounded-full shadow flex items-center justify-center hover:bg-white">
+                    <button onclick="window.nextImage()" class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 rounded-full shadow flex items-center justify-center hover:bg-white">
                         <i class="fa-solid fa-chevron-right text-gray-800"></i>
                     </button>
                     <div id="gallery-dots" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2"></div>
@@ -183,7 +186,7 @@
                 
                 <p id="modal-desc" class="text-gray-600 leading-relaxed"></p>
                 
-                <button onclick="addToCartFromModal()" class="w-full bg-brand-red text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-red-200 hover:bg-brand-darkRed transition active:scale-95 flex items-center justify-center gap-2">
+                <button onclick="window.addToCartFromModal()" class="w-full bg-brand-red text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-red-200 hover:bg-brand-darkRed transition active:scale-95 flex items-center justify-center gap-2">
                     <i class="fa-solid fa-cart-plus"></i>
                     Səbətə At
                 </button>
@@ -193,12 +196,12 @@
 
     <!-- 2. SEPET (CART) MODALI -->
     <div id="cart-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-        <div class="absolute inset-0 modal-backdrop" onclick="closeModal('cart-modal')"></div>
+        <div class="absolute inset-0 modal-backdrop" onclick="window.closeModal('cart-modal')"></div>
         <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl relative z-10 flex flex-col max-h-[80vh] animate-scale-up">
             
             <div class="p-5 border-b border-gray-100 flex justify-between items-center">
                 <h2 class="text-xl font-bold flex items-center gap-2"><i class="fa-solid fa-shopping-bag text-brand-red"></i> Səbətim</h2>
-                <button onclick="closeModal('cart-modal')" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200">
+                <button onclick="window.closeModal('cart-modal')" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200">
                     <i class="fa-solid fa-times"></i>
                 </button>
             </div>
@@ -215,7 +218,7 @@
                     <span class="text-gray-600">Cəmi:</span>
                     <span id="cart-total" class="text-2xl font-bold text-brand-red">0 ₼</span>
                 </div>
-                <button onclick="checkoutWhatsApp()" class="w-full bg-green-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-green-600 transition active:scale-95 flex items-center justify-center gap-2">
+                <button onclick="window.checkoutWhatsApp()" class="w-full bg-green-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-green-600 transition active:scale-95 flex items-center justify-center gap-2">
                     <i class="fa-brands fa-whatsapp text-2xl"></i>
                     Sifarişi Rəsmiləşdir
                 </button>
@@ -225,11 +228,11 @@
 
     <!-- 3. ŞİFRE MODALI -->
     <div id="password-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-        <div class="absolute inset-0 modal-backdrop" onclick="closeModal('password-modal')"></div>
+        <div class="absolute inset-0 modal-backdrop" onclick="window.closeModal('password-modal')"></div>
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm relative z-10 animate-scale-up">
             <h3 class="text-xl font-bold mb-6 text-center text-gray-800">Admin Girişi</h3>
             <input type="password" id="admin-pass" placeholder="Şifrə" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4 text-center text-lg tracking-widest focus:ring-2 focus:ring-brand-red outline-none">
-            <button onclick="checkPassword()" class="w-full bg-brand-dark text-white py-4 rounded-xl font-bold hover:bg-black transition">Daxil Ol</button>
+            <button onclick="window.checkPassword()" class="w-full bg-brand-dark text-white py-4 rounded-xl font-bold hover:bg-black transition">Daxil Ol</button>
         </div>
     </div>
 
@@ -238,7 +241,7 @@
         <div class="max-w-3xl mx-auto p-6">
             <div class="flex justify-between items-center mb-8 sticky top-0 bg-white py-4 z-10 border-b border-gray-100">
                 <h2 class="text-2xl font-bold text-brand-dark">Admin Paneli</h2>
-                <button onclick="closeModal('admin-panel')" class="p-2 bg-gray-100 rounded-full hover:bg-red-100 hover:text-red-600 transition">
+                <button onclick="window.closeModal('admin-panel')" class="p-2 bg-gray-100 rounded-full hover:bg-red-100 hover:text-red-600 transition">
                     <i class="fa-solid fa-times"></i>
                 </button>
             </div>
@@ -251,9 +254,9 @@
                     
                     <!-- Resim Yükleme -->
                     <div id="drop-zone" class="drag-area border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center cursor-pointer transition-colors bg-white mb-4" 
-                        ondragover="handleDragOver(event)" 
-                        ondragleave="handleDragLeave(event)" 
-                        ondrop="handleDrop(event)"
+                        ondragover="window.handleDragOver(event)" 
+                        ondragleave="window.handleDragLeave(event)" 
+                        ondrop="window.handleDrop(event)"
                         onclick="document.getElementById('file-input').click()">
                         
                         <div id="upload-prompt" class="py-2">
@@ -262,7 +265,7 @@
                             <p class="text-xs text-gray-400">(Maksimum 3 ədəd)</p>
                         </div>
                         <div id="preview-grid" class="hidden grid grid-cols-3 gap-2 mt-2"></div>
-                        <input type="file" id="file-input" class="file-input-hidden" accept="image/*" multiple onchange="handleFileSelect(event)">
+                        <input type="file" id="file-input" class="file-input-hidden" accept="image/*" multiple onchange="window.handleFileSelect(event)">
                     </div>
 
                     <div class="grid md:grid-cols-2 gap-4 mb-4">
@@ -271,7 +274,7 @@
                     </div>
                     <textarea id="bag-desc" rows="3" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-brand-red outline-none mb-4" placeholder="Məhsul haqqında məlumat..."></textarea>
                     
-                    <button onclick="publishBag()" id="publish-btn" class="w-full bg-brand-dark text-white py-3 rounded-xl font-bold hover:bg-black transition">
+                    <button onclick="window.publishBag()" id="publish-btn" class="w-full bg-brand-dark text-white py-3 rounded-xl font-bold hover:bg-black transition">
                         Paylaş
                     </button>
                 </div>
@@ -297,15 +300,40 @@
 
     <!-- Script -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = JSON.parse(__firebase_config);
+        // Hata Düzeltmesi: Yapılandırma Kontrolü
+        let firebaseConfig;
+        let appId = 'default-app-id';
+
+        try {
+            // Ortam değişkeni tanımlı mı diye kontrol ediyoruz
+            if (typeof __firebase_config !== 'undefined') {
+                firebaseConfig = JSON.parse(__firebase_config);
+                if (typeof __app_id !== 'undefined') appId = __app_id;
+            } else {
+                // Eğer tanımlı değilse (Lokalde çalıştırıyorsanız)
+                // Buraya kendi Firebase bilgilerinizi girmelisiniz.
+                console.warn("Otomatik yapılandırma bulunamadı. Manuel yapılandırma gerekiyor.");
+                firebaseConfig = {
+                    // Burayı kendi Firebase konsolunuzdan alacağınız bilgilerle doldurun
+                    apiKey: "API_KEY_BURAYA",
+                    authDomain: "PROJE_ID.firebaseapp.com",
+                    projectId: "PROJE_ID",
+                    storageBucket: "PROJE_ID.appspot.com",
+                    messagingSenderId: "SENDER_ID",
+                    appId: "APP_ID"
+                };
+            }
+        } catch (e) {
+            console.error("Firebase Config Hatası:", e);
+        }
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         
         // State
         let currentUser = null;
@@ -313,9 +341,12 @@
         let productsData = []; // Tüm ürünleri burada tutacağız
         let cart = []; // Sepet dizisi
         let selectedProduct = null; // Modaldaki ürün
+        let modalImages = [];
+        let currentImageIndex = 0;
 
         // Auth Başlatma
         const initAuth = async () => {
+            // Token kontrolünü de güvenli hale getirelim
             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                 await signInWithCustomToken(auth, __initial_auth_token);
             } else {
@@ -336,11 +367,13 @@
             const emptyState = document.getElementById('empty-state');
             const adminList = document.getElementById('admin-product-list');
             
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'bags'), (snapshot) => {
+            const bagsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'bags');
+
+            onSnapshot(bagsCollection, (snapshot) => {
                 skeleton.style.display = 'none';
                 container.style.display = 'grid';
                 container.innerHTML = '';
-                adminList.innerHTML = ''; // Admin listesini de temizle
+                adminList.innerHTML = ''; 
 
                 if (snapshot.empty) {
                     emptyState.classList.remove('hidden');
@@ -359,6 +392,10 @@
                     renderProductCard(product, container);
                     renderAdminListItem(product, adminList);
                 });
+            }, (error) => {
+                console.error("Veri hatası:", error);
+                // Hata kullanıcıya gösterilmesin, sessiz kalsın veya:
+                // window.showToast("Bağlantı xətası", true);
             });
         }
 
@@ -370,7 +407,8 @@
 
             const card = document.createElement('div');
             card.className = 'bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group cursor-pointer border border-gray-100 animate-fade-in relative';
-            card.onclick = () => openProduct(product);
+            // Güvenli tıklama ataması
+            card.onclick = () => window.openProduct(product);
             
             card.innerHTML = `
                 <div class="aspect-[4/5] overflow-hidden bg-gray-50 relative">
@@ -406,28 +444,22 @@
                         <p class="text-xs text-gray-500">${priceFormatted}</p>
                     </div>
                 </div>
-                <button onclick="deleteProduct('${product.id}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition flex items-center justify-center flex-shrink-0">
+                <button onclick="window.deleteProduct('${product.id}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition flex items-center justify-center flex-shrink-0">
                     <i class="fa-solid fa-trash"></i>
                 </button>
             `;
             container.appendChild(item);
         }
 
-        // --- SEPET İŞLEMLERİ ---
+        // --- WINDOW FONKSİYON ATAMALARI ---
+        
         window.addToCartFromModal = () => {
             if(!selectedProduct) return;
-            
-            // Sepete ekle
             cart.push(selectedProduct);
+            window.showToast('Səbətə əlavə edildi!');
+            window.updateCartUI();
+            window.closeModal('product-modal');
             
-            // Bildirim
-            showToast('Səbətə əlavə edildi!');
-            
-            // UI Güncelle
-            updateCartUI();
-            closeModal('product-modal');
-            
-            // İkon Animasyonu
             const cartCount = document.getElementById('cart-count');
             cartCount.classList.remove('scale-0');
             cartCount.classList.add('animate-bounce-short');
@@ -439,16 +471,13 @@
             const totalEl = document.getElementById('cart-total');
             const itemsContainer = document.getElementById('cart-items');
             
-            // Sayaç
             countEl.innerText = cart.length;
             if(cart.length > 0) countEl.classList.remove('scale-0');
             else countEl.classList.add('scale-0');
 
-            // Toplam Fiyat
             const total = cart.reduce((sum, item) => sum + Number(item.price), 0);
             totalEl.innerText = new Intl.NumberFormat('az-AZ', { style: 'currency', currency: 'AZN' }).format(total);
 
-            // Liste Render
             itemsContainer.innerHTML = '';
             if(cart.length === 0) {
                 itemsContainer.innerHTML = '<div class="text-center py-10 text-gray-400 flex flex-col items-center"><i class="fa-solid fa-basket-shopping text-4xl mb-2 opacity-20"></i><p>Səbətiniz boşdur.</p></div>';
@@ -468,7 +497,7 @@
                         <h4 class="font-bold text-sm text-brand-dark truncate">${item.title}</h4>
                         <p class="text-brand-red text-sm font-bold">${price}</p>
                     </div>
-                    <button onclick="removeFromCart(${index})" class="text-gray-400 hover:text-red-500 p-2">
+                    <button onclick="window.removeFromCart(${index})" class="text-gray-400 hover:text-red-500 p-2">
                         <i class="fa-solid fa-trash"></i>
                     </button>
                 `;
@@ -478,22 +507,21 @@
 
         window.removeFromCart = (index) => {
             cart.splice(index, 1);
-            updateCartUI();
+            window.updateCartUI();
         };
 
         window.openCart = () => {
-            updateCartUI();
+            window.updateCartUI();
             document.getElementById('cart-modal').classList.remove('hidden');
         };
 
-        // --- WHATSAPP CHECKOUT ---
         window.checkoutWhatsApp = () => {
             if(cart.length === 0) {
-                showToast('Səbət boşdur!', true);
+                window.showToast('Səbət boşdur!', true);
                 return;
             }
 
-            const phoneNumber = "994707841414"; // Senin numaran
+            const phoneNumber = "994707841414"; 
             let message = "*Salam, mən aşağıdakı məhsulları sifariş etmək istəyirəm:*\n\n";
             
             let total = 0;
@@ -509,22 +537,17 @@
             window.open(url, '_blank');
         };
 
-        // --- ÜRÜN DETAY (MODAL) ---
-        let modalImages = [];
-        let currentImageIndex = 0;
-
         window.openProduct = (product) => {
-            selectedProduct = product; // Global değişkene ata (Sepet için)
+            selectedProduct = product; 
             
             modalImages = product.images || (product.image ? [product.image] : []);
             currentImageIndex = 0;
-            updateModalImage();
+            window.updateModalImage();
 
             document.getElementById('modal-title').innerText = product.title;
             document.getElementById('modal-price').innerText = new Intl.NumberFormat('az-AZ', { style: 'currency', currency: 'AZN' }).format(product.price);
             document.getElementById('modal-desc').innerText = product.description;
 
-            // Galeri Kontrolleri
             const controls = document.getElementById('gallery-controls');
             const dotsContainer = document.getElementById('gallery-dots');
             dotsContainer.innerHTML = '';
@@ -556,7 +579,6 @@
                 img.src = modalImages[currentImageIndex];
                 img.style.opacity = '1';
                 
-                // Noktaları güncelle
                 const dots = document.querySelectorAll('.dot');
                 dots.forEach((dot, idx) => {
                     if(idx === currentImageIndex) dot.classList.add('active');
@@ -567,31 +589,30 @@
 
         window.nextImage = () => {
             currentImageIndex = (currentImageIndex + 1) % modalImages.length;
-            updateModalImage();
+            window.updateModalImage();
         };
+        
         window.prevImage = () => {
             currentImageIndex = (currentImageIndex - 1 + modalImages.length) % modalImages.length;
-            updateModalImage();
+            window.updateModalImage();
         };
 
-        // --- ADMİN SİLME İŞLEMİ ---
         window.deleteProduct = async (id) => {
             if(!confirm("Bu məhsulu silmək istədiyinizə əminsiniz?")) return;
 
             try {
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'bags', id));
-                showToast('Məhsul silindi.');
+                window.showToast('Məhsul silindi.');
             } catch (error) {
                 console.error(error);
-                showToast('Xəta: ' + error.message, true);
+                window.showToast('Xəta: ' + error.message, true);
             }
         };
 
-        // --- RESİM YÜKLEME (Optimize) ---
         window.processFile = (file) => {
             if (!file || !file.type.startsWith('image/')) return;
             if (currentImages.length >= 3) {
-                showToast('Maksimum 3 şəkil seçə bilərsiniz.', true);
+                window.showToast('Maksimum 3 şəkil seçə bilərsiniz.', true);
                 return;
             }
 
@@ -616,7 +637,7 @@
                     const compressed = canvas.toDataURL('image/jpeg', 0.7);
                     
                     currentImages.push(compressed);
-                    updatePreviewGrid();
+                    window.updatePreviewGrid();
                 };
                 img.src = e.target.result;
             };
@@ -636,7 +657,7 @@
                     div.className = 'relative aspect-square rounded-lg overflow-hidden border border-gray-200 group';
                     div.innerHTML = `
                         <img src="${src}" class="w-full h-full object-cover">
-                        <button onclick="removeSingleImage(${index}, event)" class="absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow hover:scale-110 transition">
+                        <button onclick="window.removeSingleImage(${index}, event)" class="absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow hover:scale-110 transition">
                             <i class="fa-solid fa-times"></i>
                         </button>
                     `;
@@ -651,25 +672,24 @@
         window.removeSingleImage = (index, e) => {
             e.stopPropagation();
             currentImages.splice(index, 1);
-            updatePreviewGrid();
+            window.updatePreviewGrid();
             if(currentImages.length === 0) document.getElementById('file-input').value = '';
         };
 
-        window.handleFileSelect = (e) => Array.from(e.target.files).forEach(file => processFile(file));
+        window.handleFileSelect = (e) => Array.from(e.target.files).forEach(file => window.processFile(file));
         window.handleDrop = (e) => {
             e.preventDefault();
             document.getElementById('drop-zone').classList.remove('active');
-            Array.from(e.dataTransfer.files).forEach(file => processFile(file));
+            Array.from(e.dataTransfer.files).forEach(file => window.processFile(file));
         };
 
-        // --- ADMİN EKLEME ---
         window.publishBag = async () => {
             const title = document.getElementById('bag-title').value;
             const price = document.getElementById('bag-price').value;
             const desc = document.getElementById('bag-desc').value;
 
             if (!title || !price || currentImages.length === 0) {
-                showToast('Başlıq, qiymət və şəkil mütləqdir.', true);
+                window.showToast('Başlıq, qiymət və şəkil mütləqdir.', true);
                 return;
             }
 
@@ -689,26 +709,23 @@
                     authorId: currentUser.uid
                 });
 
-                showToast('Məhsul paylaşıldı!');
+                window.showToast('Məhsul paylaşıldı!');
                 
-                // Temizle
                 document.getElementById('bag-title').value = '';
                 document.getElementById('bag-price').value = '';
                 document.getElementById('bag-desc').value = '';
                 currentImages = [];
-                updatePreviewGrid();
-                // Admin paneli kapatma ki kullanıcı seri ekleyebilsin veya listeyi görsün
+                window.updatePreviewGrid();
 
             } catch (error) {
                 console.error(error);
-                showToast('Xəta: ' + error.message, true);
+                window.showToast('Xəta: ' + error.message, true);
             } finally {
                 btn.innerText = originalText;
                 btn.disabled = false;
             }
         };
 
-        // --- GENEL UI ---
         window.toggleAdminAuth = () => {
             document.getElementById('password-modal').classList.remove('hidden');
             document.getElementById('admin-pass').value = '';
@@ -717,10 +734,10 @@
 
         window.checkPassword = () => {
             if (document.getElementById('admin-pass').value === '1975') {
-                closeModal('password-modal');
+                window.closeModal('password-modal');
                 document.getElementById('admin-panel').classList.remove('hidden');
             } else {
-                showToast('Yanlış Şifrə!', true);
+                window.showToast('Yanlış Şifrə!', true);
             }
         };
 
