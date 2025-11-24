@@ -1,770 +1,471 @@
 <!DOCTYPE html>
-<html lang="az">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mubag Style | Exclusive Bags</title>
-    
-    <!-- Favicon Hatası Çözümü -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👜</text></svg>">
-    
+    <title>PDF Çizim ve Düzenleme Aracı</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Fontlar ve İkonlar -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- PDF.js Kütüphanesi -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Font Awesome İkonlar -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- Tailwind Konfigürasyonu -->
+    
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Outfit', 'sans-serif'],
-                    },
                     colors: {
-                        brand: {
-                            red: '#E60023',      
-                            darkRed: '#B3001B',  
-                            dark: '#1a1a1a',
-                            light: '#ffffff',
-                        }
+                        primary: '#3b82f6',
+                        secondary: '#1e293b',
                     },
-                    animation: {
-                        'fade-in': 'fadeIn 0.5s ease-out',
-                        'scale-up': 'scaleUp 0.3s ease-out',
-                        'gradient-x': 'gradientX 15s ease infinite',
-                        'bounce-short': 'bounceShort 0.5s ease-in-out 1'
-                    },
-                    keyframes: {
-                        fadeIn: {
-                            '0%': { opacity: '0' },
-                            '100%': { opacity: '1' },
-                        },
-                        scaleUp: {
-                            '0%': { transform: 'scale(0.9)', opacity: '0' },
-                            '100%': { transform: 'scale(1)', opacity: '1' },
-                        },
-                        gradientX: {
-                            '0%, 100%': { 'background-position': 'left center' },
-                            '50%': { 'background-position': 'right center' },
-                        },
-                        bounceShort: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-25%)' }
-                        }
+                    cursor: {
+                        'crosshair': 'crosshair',
+                        'text': 'text',
                     }
                 }
             }
         }
     </script>
-
     <style>
-        /* Özel Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #fff; }
-        ::-webkit-scrollbar-thumb { background: #E60023; border-radius: 10px; }
-        
-        .file-input-hidden { display: none; }
-        
-        /* Hareketli Arka Plan */
-        .animated-bg {
-            background: linear-gradient(-45deg, #ffffff, #fff0f0, #ffe6e6, #ffffff);
-            background-size: 400% 400%;
-            animation: gradientX 10s ease infinite;
+        body {
+            background-color: #f3f4f6;
+            touch-action: none; /* Mobilde kaydırmayı engellemek için */
         }
-
-        .modal-backdrop {
-            background-color: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
+        #canvas-wrapper {
+            position: relative;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            margin: 0 auto;
+            background-color: white;
+            display: inline-block; /* İçeriğe göre genişlemesi için */
         }
-
-        .drag-area.active { border-color: #E60023; background-color: rgba(230, 0, 35, 0.05); }
-        
-        /* Galeri Noktaları */
-        .dot {
-            height: 8px;
-            width: 8px;
-            background-color: #ddd;
-            border-radius: 50%;
-            display: inline-block;
-            transition: background-color 0.3s;
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
         }
-        .dot.active { background-color: #E60023; width: 20px; border-radius: 10px; }
-
-        body { -webkit-tap-highlight-color: transparent; }
+        #pdf-render {
+            z-index: 1; /* Altta PDF */
+        }
+        #draw-layer {
+            z-index: 10; /* Üstte çizim katmanı */
+            cursor: crosshair;
+        }
+        .tool-btn {
+            transition: all 0.2s;
+        }
+        .tool-btn.active {
+            background-color: #e0e7ff;
+            color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        #text-input-overlay {
+            position: absolute;
+            display: none;
+            z-index: 20;
+            background: transparent;
+            border: 1px dashed #3b82f6;
+            padding: 4px;
+            font-family: sans-serif;
+            outline: none;
+            min-width: 100px;
+            color: black;
+            font-size: 16px;
+        }
+        /* Drop Zone */
+        #drop-zone {
+            transition: all 0.3s ease;
+        }
+        #drop-zone.dragover {
+            background-color: rgba(59, 130, 246, 0.1);
+            border-color: #3b82f6;
+            transform: scale(1.02);
+        }
     </style>
 </head>
-<body class="animated-bg text-brand-dark font-sans antialiased min-h-screen pb-24">
+<body class="h-screen flex flex-col overflow-hidden text-slate-800">
 
-    <!-- Navbar -->
-    <nav class="fixed top-0 w-full z-40 bg-white/90 backdrop-blur-md border-b border-red-100 shadow-sm">
-        <div class="max-w-6xl mx-auto px-4">
-            <div class="flex justify-between items-center h-16">
-                <!-- Logo -->
-                <div class="flex items-center gap-2 cursor-pointer" onclick="window.scrollTo(0,0)">
-                    <div class="w-8 h-8 bg-brand-red text-white flex items-center justify-center rounded-lg font-bold text-lg">M</div>
-                    <span class="font-bold text-xl tracking-tight">Mubag<span class="text-brand-red">_Style</span></span>
-                </div>
-                
-                <!-- Sepet İkonu -->
-                <button onclick="window.openCart()" class="relative p-2 text-brand-dark hover:text-brand-red transition group">
-                    <i class="fa-solid fa-bag-shopping text-2xl"></i>
-                    <span id="cart-count" class="absolute top-0 right-0 w-5 h-5 bg-brand-red text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white transform scale-0 transition-transform duration-200">0</span>
-                </button>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Hero -->
-    <header class="pt-28 pb-8 px-4 text-center max-w-4xl mx-auto animate-fade-in">
-        <h1 class="text-4xl md:text-6xl font-extrabold mb-4 leading-tight text-brand-dark">
-            Tərzini <span class="text-brand-red">Qırmızı ilə</span> Yansıt
-        </h1>
-        <p class="text-gray-500 text-lg max-w-md mx-auto">
-            Mövsümün ən özəl çanta kolleksiyası indi Mubag_Style-da.
-        </p>
-    </header>
-
-    <!-- Ürün Listesi -->
-    <main class="max-w-6xl mx-auto px-4">
-        <div id="loading-skeleton" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            <div class="bg-white rounded-2xl h-72 animate-pulse shadow-sm"></div>
-            <div class="bg-white rounded-2xl h-72 animate-pulse shadow-sm"></div>
-            <div class="bg-white rounded-2xl h-72 animate-pulse shadow-sm"></div>
-            <div class="bg-white rounded-2xl h-72 animate-pulse shadow-sm"></div>
-        </div>
-
-        <div id="products-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 pb-10 hidden">
-            <!-- JS ile doldurulacak -->
-        </div>
-        
-        <div id="empty-state" class="hidden flex flex-col items-center justify-center py-20 text-gray-400">
-            <i class="fa-solid fa-box-open text-6xl mb-4 text-red-100"></i>
-            <p>Hələ heç bir məhsul əlavə edilməyib.</p>
-        </div>
-    </main>
-
-    <!-- Footer & Admin Trigger -->
-    <footer class="mt-12 py-8 text-center text-gray-400 text-sm bg-white/50 backdrop-blur-sm border-t border-red-50">
-        <p>&copy; 2025 Mubag_Style</p>
-        <button onclick="window.toggleAdminAuth()" class="mt-4 p-4 hover:text-brand-red transition opacity-40 hover:opacity-100">
-            <i class="fa-solid fa-lock"></i> Admin
-        </button>
-    </footer>
-
-    <!-- 1. ÜRÜN DETAY MODALI -->
-    <div id="product-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-        <div class="absolute inset-0 modal-backdrop" onclick="window.closeModal('product-modal')"></div>
-        
-        <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl relative z-10 overflow-hidden transform scale-90 opacity-0 transition-all duration-300" id="product-modal-card">
+    <!-- Üst Araç Çubuğu -->
+    <header class="bg-white border-b border-gray-200 px-4 py-3 shadow-sm flex items-center justify-between z-30 shrink-0">
+        <div class="flex items-center gap-4">
+            <h1 class="font-bold text-xl text-primary flex items-center gap-2">
+                <i class="fa-solid fa-file-pdf"></i> PDF<span class="text-slate-600 font-normal">Editör</span>
+            </h1>
             
-            <button onclick="window.closeModal('product-modal')" class="absolute top-4 right-4 z-20 w-10 h-10 bg-white/80 backdrop-blur rounded-full flex items-center justify-center hover:bg-red-50 hover:text-red-600 transition shadow-sm">
-                <i class="fa-solid fa-times text-lg"></i>
+            <!-- Dosya Yükleme -->
+            <label class="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-md text-sm transition font-medium">
+                <i class="fa-solid fa-upload mr-1"></i> PDF Aç
+                <input type="file" id="file-input" accept="application/pdf" class="hidden">
+            </label>
+        </div>
+
+        <!-- Araçlar -->
+        <div class="flex items-center gap-2 bg-slate-50 p-1.5 rounded-lg border border-gray-200" id="toolbar">
+            <button onclick="setTool('cursor')" id="btn-cursor" class="tool-btn active p-2 rounded hover:bg-white hover:shadow-sm" title="Seç / Taşı">
+                <i class="fa-solid fa-arrow-pointer"></i>
+            </button>
+            <div class="w-px h-6 bg-gray-300 mx-1"></div>
+            
+            <button onclick="setTool('pen')" id="btn-pen" class="tool-btn p-2 rounded hover:bg-white hover:shadow-sm" title="Kalem">
+                <i class="fa-solid fa-pen"></i>
+            </button>
+            
+            <button onclick="setTool('text')" id="btn-text" class="tool-btn p-2 rounded hover:bg-white hover:shadow-sm" title="Metin Yaz">
+                <i class="fa-solid fa-font"></i>
+            </button>
+            
+            <button onclick="clearCanvas()" class="tool-btn p-2 rounded hover:bg-red-50 text-red-500 hover:text-red-600" title="Sayfayı Temizle">
+                <i class="fa-solid fa-trash"></i>
             </button>
 
-            <div class="relative aspect-square bg-gray-100 group">
-                <img id="modal-main-img" src="" class="w-full h-full object-cover transition-transform duration-500" alt="Product">
-                
-                <div id="gallery-controls" class="hidden">
-                    <button onclick="window.prevImage()" class="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 rounded-full shadow flex items-center justify-center hover:bg-white">
-                        <i class="fa-solid fa-chevron-left text-gray-800"></i>
-                    </button>
-                    <button onclick="window.nextImage()" class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 rounded-full shadow flex items-center justify-center hover:bg-white">
-                        <i class="fa-solid fa-chevron-right text-gray-800"></i>
-                    </button>
-                    <div id="gallery-dots" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2"></div>
-                </div>
-            </div>
-            
-            <div class="p-6 space-y-4">
-                <div class="flex justify-between items-start">
-                    <h2 id="modal-title" class="text-2xl font-bold text-gray-900 leading-tight"></h2>
-                    <span id="modal-price" class="text-2xl font-bold text-brand-red whitespace-nowrap"></span>
-                </div>
-                
-                <p id="modal-desc" class="text-gray-600 leading-relaxed"></p>
-                
-                <button onclick="window.addToCartFromModal()" class="w-full bg-brand-red text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-red-200 hover:bg-brand-darkRed transition active:scale-95 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-cart-plus"></i>
-                    Səbətə At
-                </button>
+            <div class="w-px h-6 bg-gray-300 mx-1"></div>
+
+            <!-- Renk ve Boyut -->
+            <div class="flex items-center gap-2 px-2">
+                <input type="color" id="color-picker" value="#000000" class="w-8 h-8 rounded cursor-pointer border-0 bg-transparent">
+                <select id="line-width" class="bg-transparent text-sm border-b border-gray-300 focus:outline-none pb-1 w-16">
+                    <option value="2">İnce</option>
+                    <option value="5" selected>Orta</option>
+                    <option value="10">Kalın</option>
+                </select>
             </div>
         </div>
-    </div>
 
-    <!-- 2. SEPET (CART) MODALI -->
-    <div id="cart-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-        <div class="absolute inset-0 modal-backdrop" onclick="window.closeModal('cart-modal')"></div>
-        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl relative z-10 flex flex-col max-h-[80vh] animate-scale-up">
-            
-            <div class="p-5 border-b border-gray-100 flex justify-between items-center">
-                <h2 class="text-xl font-bold flex items-center gap-2"><i class="fa-solid fa-shopping-bag text-brand-red"></i> Səbətim</h2>
-                <button onclick="window.closeModal('cart-modal')" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200">
-                    <i class="fa-solid fa-times"></i>
-                </button>
+        <!-- Kaydetme ve Sayfalama -->
+        <div class="flex items-center gap-3">
+            <div class="flex items-center gap-1 bg-slate-100 rounded-md px-2 py-1" id="pagination-controls" style="visibility: hidden;">
+                <button onclick="changePage(-1)" class="p-1 hover:text-primary"><i class="fa-solid fa-chevron-left"></i></button>
+                <span id="page-num" class="text-sm font-medium w-12 text-center">0 / 0</span>
+                <button onclick="changePage(1)" class="p-1 hover:text-primary"><i class="fa-solid fa-chevron-right"></i></button>
             </div>
-
-            <div id="cart-items" class="flex-1 overflow-y-auto p-5 space-y-4">
-                <!-- JS ile sepet öğeleri gelecek -->
-                <div class="text-center py-10 text-gray-400">
-                    <p>Səbətiniz boşdur.</p>
-                </div>
-            </div>
-
-            <div class="p-5 border-t border-gray-100 bg-gray-50 rounded-b-3xl">
-                <div class="flex justify-between items-center mb-4">
-                    <span class="text-gray-600">Cəmi:</span>
-                    <span id="cart-total" class="text-2xl font-bold text-brand-red">0 ₼</span>
-                </div>
-                <button onclick="window.checkoutWhatsApp()" class="w-full bg-green-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-green-600 transition active:scale-95 flex items-center justify-center gap-2">
-                    <i class="fa-brands fa-whatsapp text-2xl"></i>
-                    Sifarişi Rəsmiləşdir
-                </button>
-            </div>
+            <button onclick="downloadPage()" class="bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-md shadow-sm transition text-sm font-medium">
+                <i class="fa-solid fa-image mr-1"></i> İndir (Resim)
+            </button>
         </div>
-    </div>
+    </header>
 
-    <!-- 3. ŞİFRE MODALI -->
-    <div id="password-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-        <div class="absolute inset-0 modal-backdrop" onclick="window.closeModal('password-modal')"></div>
-        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm relative z-10 animate-scale-up">
-            <h3 class="text-xl font-bold mb-6 text-center text-gray-800">Admin Girişi</h3>
-            <input type="password" id="admin-pass" placeholder="Şifrə" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4 text-center text-lg tracking-widest focus:ring-2 focus:ring-brand-red outline-none">
-            <button onclick="window.checkPassword()" class="w-full bg-brand-dark text-white py-4 rounded-xl font-bold hover:bg-black transition">Daxil Ol</button>
-        </div>
-    </div>
-
-    <!-- 4. YÖNETİCİ PANELİ (Ekleme ve Silme) -->
-    <div id="admin-panel" class="fixed inset-0 z-50 hidden bg-white overflow-y-auto">
-        <div class="max-w-3xl mx-auto p-6">
-            <div class="flex justify-between items-center mb-8 sticky top-0 bg-white py-4 z-10 border-b border-gray-100">
-                <h2 class="text-2xl font-bold text-brand-dark">Admin Paneli</h2>
-                <button onclick="window.closeModal('admin-panel')" class="p-2 bg-gray-100 rounded-full hover:bg-red-100 hover:text-red-600 transition">
-                    <i class="fa-solid fa-times"></i>
-                </button>
-            </div>
-
-            <div class="space-y-8 pb-10">
-                
-                <!-- Bölüm 1: Yeni Ürün Ekle -->
-                <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                    <h3 class="text-lg font-bold mb-4 text-brand-red"><i class="fa-solid fa-plus-circle"></i> Yeni Çanta Əlavə Et</h3>
-                    
-                    <!-- Resim Yükleme -->
-                    <div id="drop-zone" class="drag-area border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center cursor-pointer transition-colors bg-white mb-4" 
-                        ondragover="window.handleDragOver(event)" 
-                        ondragleave="window.handleDragLeave(event)" 
-                        ondrop="window.handleDrop(event)"
-                        onclick="document.getElementById('file-input').click()">
-                        
-                        <div id="upload-prompt" class="py-2">
-                            <i class="fa-solid fa-cloud-upload text-2xl text-brand-red mb-2"></i>
-                            <p class="text-gray-600 font-medium">Şəkilləri Seç</p>
-                            <p class="text-xs text-gray-400">(Maksimum 3 ədəd)</p>
-                        </div>
-                        <div id="preview-grid" class="hidden grid grid-cols-3 gap-2 mt-2"></div>
-                        <input type="file" id="file-input" class="file-input-hidden" accept="image/*" multiple onchange="window.handleFileSelect(event)">
-                    </div>
-
-                    <div class="grid md:grid-cols-2 gap-4 mb-4">
-                        <input type="text" id="bag-title" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-brand-red outline-none" placeholder="Məhsulun Adı">
-                        <input type="number" id="bag-price" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-brand-red outline-none" placeholder="Qiymət (AZN)">
-                    </div>
-                    <textarea id="bag-desc" rows="3" class="w-full p-3 rounded-xl border border-gray-200 focus:ring-brand-red outline-none mb-4" placeholder="Məhsul haqqında məlumat..."></textarea>
-                    
-                    <button onclick="window.publishBag()" id="publish-btn" class="w-full bg-brand-dark text-white py-3 rounded-xl font-bold hover:bg-black transition">
-                        Paylaş
-                    </button>
-                </div>
-
-                <!-- Bölüm 2: Məhsulları Sil (Liste) -->
-                <div>
-                    <h3 class="text-lg font-bold mb-4 text-brand-red"><i class="fa-solid fa-trash-alt"></i> Məhsulları Sil</h3>
-                    <div id="admin-product-list" class="space-y-3">
-                        <!-- JS ile doldurulacak -->
-                        <p class="text-gray-400 text-sm">Yüklənir...</p>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-    <!-- Bildirim -->
-    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-brand-dark text-white px-6 py-3 rounded-full shadow-2xl z-[80] transform -translate-y-32 transition-transform duration-300 flex items-center gap-3">
-        <div id="toast-icon"></div>
-        <span id="toast-msg" class="font-medium text-sm"></span>
-    </div>
-
-    <!-- Script -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Hata Düzeltmesi: Yapılandırma Kontrolü
-        let firebaseConfig;
-        let appId = 'default-app-id';
-
-        try {
-            // Ortam değişkeni tanımlı mı diye kontrol ediyoruz
-            if (typeof __firebase_config !== 'undefined') {
-                firebaseConfig = JSON.parse(__firebase_config);
-                if (typeof __app_id !== 'undefined') appId = __app_id;
-            } else {
-                // Eğer tanımlı değilse (Lokalde çalıştırıyorsanız)
-                // Buraya kendi Firebase bilgilerinizi girmelisiniz.
-                console.warn("Otomatik yapılandırma bulunamadı. Manuel yapılandırma gerekiyor.");
-                firebaseConfig = {
-                    // Burayı kendi Firebase konsolunuzdan alacağınız bilgilerle doldurun
-                    apiKey: "API_KEY_BURAYA",
-                    authDomain: "PROJE_ID.firebaseapp.com",
-                    projectId: "PROJE_ID",
-                    storageBucket: "PROJE_ID.appspot.com",
-                    messagingSenderId: "SENDER_ID",
-                    appId: "APP_ID"
-                };
-            }
-        } catch (e) {
-            console.error("Firebase Config Hatası:", e);
-        }
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+    <!-- Ana Çalışma Alanı -->
+    <main class="flex-1 overflow-auto bg-slate-200 relative flex justify-center p-8" id="main-container">
         
-        // State
-        let currentUser = null;
-        let currentImages = [];
-        let productsData = []; // Tüm ürünleri burada tutacağız
-        let cart = []; // Sepet dizisi
-        let selectedProduct = null; // Modaldaki ürün
-        let modalImages = [];
-        let currentImageIndex = 0;
+        <!-- Sürükle Bırak Alanı (Başlangıçta Görünür) -->
+        <div id="drop-zone" class="absolute inset-4 border-4 border-dashed border-gray-300 bg-white rounded-xl flex flex-col items-center justify-center z-50">
+            <div class="text-center p-10">
+                <i class="fa-solid fa-file-pdf text-6xl text-gray-300 mb-4"></i>
+                <h2 class="text-2xl font-bold text-gray-700 mb-2">PDF Dosyasını Buraya Sürükleyin</h2>
+                <p class="text-gray-500 mb-6">veya yukarıdaki "PDF Aç" butonunu kullanın</p>
+                <button onclick="document.getElementById('file-input').click()" class="bg-primary text-white px-6 py-3 rounded-lg shadow hover:bg-blue-600 transition">
+                    Dosya Seç
+                </button>
+            </div>
+        </div>
 
-        // Auth Başlatma
-        const initAuth = async () => {
-            // Token kontrolünü de güvenli hale getirelim
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
-        };
-        initAuth();
+        <!-- Canvas Wrapper (PDF + Çizim) -->
+        <div id="canvas-wrapper" style="display: none;">
+            <canvas id="pdf-render"></canvas>
+            <canvas id="draw-layer"></canvas>
+            <div id="text-input-overlay" contenteditable="true"></div>
+        </div>
 
-        onAuthStateChanged(auth, (user) => {
-            currentUser = user;
-            if (user) listenProducts();
+    </main>
+
+    <script>
+        // PDF.js Worker ayarı (CDN kullanımı)
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // Değişkenler
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+        let scale = 1.5;
+        let canvasWrapper = document.getElementById('canvas-wrapper');
+        let pdfCanvas = document.getElementById('pdf-render');
+        let drawCanvas = document.getElementById('draw-layer');
+        let pdfCtx = pdfCanvas.getContext('2d');
+        let drawCtx = drawCanvas.getContext('2d');
+        let textOverlay = document.getElementById('text-input-overlay');
+        
+        // Araç durumu
+        let currentTool = 'cursor'; // cursor, pen, text
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let drawingColor = '#000000';
+        let lineWidth = 5;
+
+        // Dosya Yükleme Eventleri
+        const fileInput = document.getElementById('file-input');
+        const dropZone = document.getElementById('drop-zone');
+
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // Drag & Drop
+        dropZone.addEventListener('dragover', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            dropZone.classList.add('dragover');
         });
 
-        // Ürünleri Dinle
-        function listenProducts() {
-            const container = document.getElementById('products-grid');
-            const skeleton = document.getElementById('loading-skeleton');
-            const emptyState = document.getElementById('empty-state');
-            const adminList = document.getElementById('admin-product-list');
-            
-            const bagsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'bags');
+        dropZone.addEventListener('dragleave', (e) => {
+            dropZone.classList.remove('dragover');
+        });
 
-            onSnapshot(bagsCollection, (snapshot) => {
-                skeleton.style.display = 'none';
-                container.style.display = 'grid';
-                container.innerHTML = '';
-                adminList.innerHTML = ''; 
-
-                if (snapshot.empty) {
-                    emptyState.classList.remove('hidden');
-                    adminList.innerHTML = '<p class="text-gray-400 italic">Silinəcək məhsul yoxdur.</p>';
-                    return;
-                } else {
-                    emptyState.classList.add('hidden');
-                }
-
-                productsData = [];
-                snapshot.forEach(doc => productsData.push({ id: doc.id, ...doc.data() }));
-                productsData.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
-                // Main Grid Render
-                productsData.forEach(product => {
-                    renderProductCard(product, container);
-                    renderAdminListItem(product, adminList);
-                });
-            }, (error) => {
-                console.error("Veri hatası:", error);
-                // Hata kullanıcıya gösterilmesin, sessiz kalsın veya:
-                // window.showToast("Bağlantı xətası", true);
-            });
-        }
-
-        // UI Render Fonksiyonları
-        function renderProductCard(product, container) {
-            const displayImages = product.images || (product.image ? [product.image] : []);
-            const mainImage = displayImages.length > 0 ? displayImages[0] : 'https://via.placeholder.com/400';
-            const priceFormatted = new Intl.NumberFormat('az-AZ', { style: 'currency', currency: 'AZN' }).format(product.price);
-
-            const card = document.createElement('div');
-            card.className = 'bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group cursor-pointer border border-gray-100 animate-fade-in relative';
-            // Güvenli tıklama ataması
-            card.onclick = () => window.openProduct(product);
-            
-            card.innerHTML = `
-                <div class="aspect-[4/5] overflow-hidden bg-gray-50 relative">
-                    <img src="${mainImage}" class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700" alt="${product.title}">
-                    ${displayImages.length > 1 ? '<div class="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-md backdrop-blur"><i class="fa-solid fa-clone"></i></div>' : ''}
-                </div>
-                <div class="p-4">
-                    <div class="flex justify-between items-start mb-1">
-                        <h3 class="font-bold text-brand-dark truncate pr-2 text-sm md:text-base">${product.title}</h3>
-                        <span class="text-brand-red font-bold text-sm whitespace-nowrap">${priceFormatted}</span>
-                    </div>
-                    <div class="flex items-center justify-between mt-2">
-                        <span class="text-xs text-gray-400 group-hover:text-brand-red transition-colors">İncələ</span>
-                        <i class="fa-solid fa-arrow-right text-xs text-gray-300 group-hover:text-brand-red"></i>
-                    </div>
-                </div>
-            `;
-            container.appendChild(card);
-        }
-
-        function renderAdminListItem(product, container) {
-            const displayImages = product.images || (product.image ? [product.image] : []);
-            const img = displayImages[0] || '';
-            const priceFormatted = new Intl.NumberFormat('az-AZ', { style: 'currency', currency: 'AZN' }).format(product.price);
-
-            const item = document.createElement('div');
-            item.className = 'flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl shadow-sm';
-            item.innerHTML = `
-                <div class="flex items-center gap-3 overflow-hidden">
-                    <img src="${img}" class="w-12 h-12 rounded-lg object-cover bg-gray-100">
-                    <div class="truncate">
-                        <p class="font-bold text-brand-dark text-sm truncate">${product.title}</p>
-                        <p class="text-xs text-gray-500">${priceFormatted}</p>
-                    </div>
-                </div>
-                <button onclick="window.deleteProduct('${product.id}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition flex items-center justify-center flex-shrink-0">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
-            `;
-            container.appendChild(item);
-        }
-
-        // --- WINDOW FONKSİYON ATAMALARI ---
-        
-        window.addToCartFromModal = () => {
-            if(!selectedProduct) return;
-            cart.push(selectedProduct);
-            window.showToast('Səbətə əlavə edildi!');
-            window.updateCartUI();
-            window.closeModal('product-modal');
-            
-            const cartCount = document.getElementById('cart-count');
-            cartCount.classList.remove('scale-0');
-            cartCount.classList.add('animate-bounce-short');
-            setTimeout(() => cartCount.classList.remove('animate-bounce-short'), 500);
-        };
-
-        window.updateCartUI = () => {
-            const countEl = document.getElementById('cart-count');
-            const totalEl = document.getElementById('cart-total');
-            const itemsContainer = document.getElementById('cart-items');
-            
-            countEl.innerText = cart.length;
-            if(cart.length > 0) countEl.classList.remove('scale-0');
-            else countEl.classList.add('scale-0');
-
-            const total = cart.reduce((sum, item) => sum + Number(item.price), 0);
-            totalEl.innerText = new Intl.NumberFormat('az-AZ', { style: 'currency', currency: 'AZN' }).format(total);
-
-            itemsContainer.innerHTML = '';
-            if(cart.length === 0) {
-                itemsContainer.innerHTML = '<div class="text-center py-10 text-gray-400 flex flex-col items-center"><i class="fa-solid fa-basket-shopping text-4xl mb-2 opacity-20"></i><p>Səbətiniz boşdur.</p></div>';
-                return;
-            }
-
-            cart.forEach((item, index) => {
-                const displayImages = item.images || (item.image ? [item.image] : []);
-                const img = displayImages[0] || '';
-                const price = new Intl.NumberFormat('az-AZ', { style: 'currency', currency: 'AZN' }).format(item.price);
-
-                const div = document.createElement('div');
-                div.className = 'flex items-center gap-3 bg-gray-50 p-3 rounded-xl';
-                div.innerHTML = `
-                    <img src="${img}" class="w-16 h-16 rounded-lg object-cover bg-white">
-                    <div class="flex-1 min-w-0">
-                        <h4 class="font-bold text-sm text-brand-dark truncate">${item.title}</h4>
-                        <p class="text-brand-red text-sm font-bold">${price}</p>
-                    </div>
-                    <button onclick="window.removeFromCart(${index})" class="text-gray-400 hover:text-red-500 p-2">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                `;
-                itemsContainer.appendChild(div);
-            });
-        };
-
-        window.removeFromCart = (index) => {
-            cart.splice(index, 1);
-            window.updateCartUI();
-        };
-
-        window.openCart = () => {
-            window.updateCartUI();
-            document.getElementById('cart-modal').classList.remove('hidden');
-        };
-
-        window.checkoutWhatsApp = () => {
-            if(cart.length === 0) {
-                window.showToast('Səbət boşdur!', true);
-                return;
-            }
-
-            const phoneNumber = "994707841414"; 
-            let message = "*Salam, mən aşağıdakı məhsulları sifariş etmək istəyirəm:*\n\n";
-            
-            let total = 0;
-            cart.forEach((item, i) => {
-                message += `${i+1}. ${item.title} - ${item.price} AZN\n`;
-                total += item.price;
-            });
-            
-            message += `\n*Cəmi Tutar: ${total} AZN*`;
-            message += "\n\nZəhmət olmasa kömək edərdiniz.";
-
-            const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-            window.open(url, '_blank');
-        };
-
-        window.openProduct = (product) => {
-            selectedProduct = product; 
-            
-            modalImages = product.images || (product.image ? [product.image] : []);
-            currentImageIndex = 0;
-            window.updateModalImage();
-
-            document.getElementById('modal-title').innerText = product.title;
-            document.getElementById('modal-price').innerText = new Intl.NumberFormat('az-AZ', { style: 'currency', currency: 'AZN' }).format(product.price);
-            document.getElementById('modal-desc').innerText = product.description;
-
-            const controls = document.getElementById('gallery-controls');
-            const dotsContainer = document.getElementById('gallery-dots');
-            dotsContainer.innerHTML = '';
-            
-            if (modalImages.length > 1) {
-                controls.classList.remove('hidden');
-                modalImages.forEach((_, idx) => {
-                    const dot = document.createElement('span');
-                    dot.className = `dot ${idx === 0 ? 'active' : ''}`;
-                    dotsContainer.appendChild(dot);
-                });
-            } else {
-                controls.classList.add('hidden');
-            }
-
-            const modal = document.getElementById('product-modal');
-            const card = document.getElementById('product-modal-card');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                card.classList.remove('scale-90', 'opacity-0');
-                card.classList.add('scale-100', 'opacity-100');
-            }, 10);
-        };
-
-        window.updateModalImage = () => {
-            const img = document.getElementById('modal-main-img');
-            img.style.opacity = '0';
-            setTimeout(() => {
-                img.src = modalImages[currentImageIndex];
-                img.style.opacity = '1';
-                
-                const dots = document.querySelectorAll('.dot');
-                dots.forEach((dot, idx) => {
-                    if(idx === currentImageIndex) dot.classList.add('active');
-                    else dot.classList.remove('active');
-                });
-            }, 150);
-        };
-
-        window.nextImage = () => {
-            currentImageIndex = (currentImageIndex + 1) % modalImages.length;
-            window.updateModalImage();
-        };
-        
-        window.prevImage = () => {
-            currentImageIndex = (currentImageIndex - 1 + modalImages.length) % modalImages.length;
-            window.updateModalImage();
-        };
-
-        window.deleteProduct = async (id) => {
-            if(!confirm("Bu məhsulu silmək istədiyinizə əminsiniz?")) return;
-
-            try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'bags', id));
-                window.showToast('Məhsul silindi.');
-            } catch (error) {
-                console.error(error);
-                window.showToast('Xəta: ' + error.message, true);
-            }
-        };
-
-        window.processFile = (file) => {
-            if (!file || !file.type.startsWith('image/')) return;
-            if (currentImages.length >= 3) {
-                window.showToast('Maksimum 3 şəkil seçə bilərsiniz.', true);
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    const MAX = 800; 
-                    
-                    if (width > height) {
-                        if (width > MAX) { height *= MAX / width; width = MAX; }
-                    } else {
-                        if (height > MAX) { width *= MAX / height; height = MAX; }
-                    }
-                    
-                    canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    const compressed = canvas.toDataURL('image/jpeg', 0.7);
-                    
-                    currentImages.push(compressed);
-                    window.updatePreviewGrid();
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        };
-
-        window.updatePreviewGrid = () => {
-            const grid = document.getElementById('preview-grid');
-            const prompt = document.getElementById('upload-prompt');
-            grid.innerHTML = '';
-            
-            if (currentImages.length > 0) {
-                prompt.classList.add('hidden');
-                grid.classList.remove('hidden');
-                currentImages.forEach((src, index) => {
-                    const div = document.createElement('div');
-                    div.className = 'relative aspect-square rounded-lg overflow-hidden border border-gray-200 group';
-                    div.innerHTML = `
-                        <img src="${src}" class="w-full h-full object-cover">
-                        <button onclick="window.removeSingleImage(${index}, event)" class="absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow hover:scale-110 transition">
-                            <i class="fa-solid fa-times"></i>
-                        </button>
-                    `;
-                    grid.appendChild(div);
-                });
-            } else {
-                prompt.classList.remove('hidden');
-                grid.classList.add('hidden');
-            }
-        };
-
-        window.removeSingleImage = (index, e) => {
+        dropZone.addEventListener('drop', (e) => {
             e.stopPropagation();
-            currentImages.splice(index, 1);
-            window.updatePreviewGrid();
-            if(currentImages.length === 0) document.getElementById('file-input').value = '';
-        };
-
-        window.handleFileSelect = (e) => Array.from(e.target.files).forEach(file => window.processFile(file));
-        window.handleDrop = (e) => {
             e.preventDefault();
-            document.getElementById('drop-zone').classList.remove('active');
-            Array.from(e.dataTransfer.files).forEach(file => window.processFile(file));
-        };
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type === 'application/pdf') {
+                loadPDF(files[0]);
+            } else {
+                alert('Lütfen geçerli bir PDF dosyası yükleyin.');
+            }
+        });
 
-        window.publishBag = async () => {
-            const title = document.getElementById('bag-title').value;
-            const price = document.getElementById('bag-price').value;
-            const desc = document.getElementById('bag-desc').value;
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file && file.type === 'application/pdf') {
+                loadPDF(file);
+            }
+        }
 
-            if (!title || !price || currentImages.length === 0) {
-                window.showToast('Başlıq, qiymət və şəkil mütləqdir.', true);
+        // PDF Yükleme
+        function loadPDF(file) {
+            const fileReader = new FileReader();
+            fileReader.onload = function() {
+                const typedarray = new Uint8Array(this.result);
+
+                pdfjsLib.getDocument(typedarray).promise.then(function(pdfDoc_) {
+                    pdfDoc = pdfDoc_;
+                    document.getElementById('drop-zone').style.display = 'none';
+                    canvasWrapper.style.display = 'block';
+                    document.getElementById('pagination-controls').style.visibility = 'visible';
+                    document.getElementById('page-num').textContent = `${pageNum} / ${pdfDoc.numPages}`;
+                    
+                    // İlk sayfayı renderla
+                    renderPage(pageNum);
+                });
+            };
+            fileReader.readAsArrayBuffer(file);
+        }
+
+        // Sayfa Renderlama
+        function renderPage(num) {
+            pageRendering = true;
+            
+            // PDF sayfasını al
+            pdfDoc.getPage(num).then(function(page) {
+                const viewport = page.getViewport({scale: scale});
+                
+                // Canvas boyutlarını ayarla
+                pdfCanvas.height = viewport.height;
+                pdfCanvas.width = viewport.width;
+                drawCanvas.height = viewport.height;
+                drawCanvas.width = viewport.width;
+                
+                canvasWrapper.style.width = viewport.width + 'px';
+                canvasWrapper.style.height = viewport.height + 'px';
+
+                // PDF'i alt katmana çiz
+                const renderContext = {
+                    canvasContext: pdfCtx,
+                    viewport: viewport
+                };
+                
+                const renderTask = page.render(renderContext);
+
+                renderTask.promise.then(function() {
+                    pageRendering = false;
+                    // Eğer bekleyen sayfa varsa onu çiz
+                    if (pageNumPending !== null) {
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                });
+            });
+
+            // Sayfa numarasını güncelle
+            document.getElementById('page-num').textContent = `${num} / ${pdfDoc.numPages}`;
+            
+            // Yeni sayfaya geçince çizimleri temizle (veya saklamak istersen burayı düzenle)
+            // Bu demo'da her sayfa değiştiğinde çizimler temizleniyor.
+            // Gelişmiş versiyonlarda çizimleri sayfa bazlı dizilerde saklayabiliriz.
+            clearCanvas(); 
+        }
+
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        function changePage(offset) {
+            if (!pdfDoc) return;
+            const newPage = pageNum + offset;
+            if (newPage >= 1 && newPage <= pdfDoc.numPages) {
+                pageNum = newPage;
+                queueRenderPage(pageNum);
+            }
+        }
+
+        // Araç Seçimi
+        function setTool(tool) {
+            currentTool = tool;
+            
+            // UI Güncelleme
+            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-${tool}`).classList.add('active');
+
+            // İmleç Ayarı
+            if (tool === 'pen') {
+                drawCanvas.style.cursor = 'crosshair';
+            } else if (tool === 'text') {
+                drawCanvas.style.cursor = 'text';
+            } else {
+                drawCanvas.style.cursor = 'default';
+            }
+        }
+
+        // Renk ve Boyut Ayarları
+        document.getElementById('color-picker').addEventListener('change', (e) => {
+            drawingColor = e.target.value;
+            if(textOverlay.style.display === 'block') {
+                textOverlay.style.color = drawingColor;
+            }
+        });
+
+        document.getElementById('line-width').addEventListener('change', (e) => {
+            lineWidth = parseInt(e.target.value);
+        });
+
+        // Çizim İşlemleri (Mouse & Touch)
+        function startPosition(e) {
+            if (currentTool !== 'pen') return;
+            isDrawing = true;
+            draw(e);
+        }
+
+        function endPosition() {
+            isDrawing = false;
+            drawCtx.beginPath();
+        }
+
+        function getMousePos(canvas, evt) {
+            const rect = canvas.getBoundingClientRect();
+            // Mouse veya Touch eventi kontrolü
+            const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+            const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+            
+            return {
+                x: (clientX - rect.left) * (canvas.width / rect.width),
+                y: (clientY - rect.top) * (canvas.height / rect.height)
+            };
+        }
+
+        function draw(e) {
+            if (!isDrawing || currentTool !== 'pen') return;
+            e.preventDefault(); // Sayfa kaymasını engelle
+
+            const pos = getMousePos(drawCanvas, e);
+
+            drawCtx.lineWidth = lineWidth;
+            drawCtx.lineCap = 'round';
+            drawCtx.strokeStyle = drawingColor;
+
+            drawCtx.lineTo(pos.x, pos.y);
+            drawCtx.stroke();
+            drawCtx.beginPath();
+            drawCtx.moveTo(pos.x, pos.y);
+        }
+
+        // Event Listeners for Drawing
+        drawCanvas.addEventListener('mousedown', startPosition);
+        drawCanvas.addEventListener('mouseup', endPosition);
+        drawCanvas.addEventListener('mousemove', draw);
+        
+        // Touch support
+        drawCanvas.addEventListener('touchstart', startPosition, {passive: false});
+        drawCanvas.addEventListener('touchend', endPosition);
+        drawCanvas.addEventListener('touchmove', draw, {passive: false});
+
+        // Metin Ekleme İşlemleri
+        drawCanvas.addEventListener('click', (e) => {
+            if (currentTool !== 'text') {
+                finalizeText(); // Başka yere tıklarsa mevcut yazıyı bitir
+                return;
+            }
+            
+            // Eğer zaten yazı yazıyorsak, önce onu tamamla
+            if (textOverlay.style.display === 'block') {
+                finalizeText();
                 return;
             }
 
-            const btn = document.getElementById('publish-btn');
-            const originalText = btn.innerText;
-            btn.innerText = 'Yüklənir...';
-            btn.disabled = true;
-
-            try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'bags'), {
-                    title,
-                    price: Number(price),
-                    description: desc,
-                    images: currentImages,
-                    image: currentImages[0], 
-                    timestamp: Date.now(),
-                    authorId: currentUser.uid
-                });
-
-                window.showToast('Məhsul paylaşıldı!');
-                
-                document.getElementById('bag-title').value = '';
-                document.getElementById('bag-price').value = '';
-                document.getElementById('bag-desc').value = '';
-                currentImages = [];
-                window.updatePreviewGrid();
-
-            } catch (error) {
-                console.error(error);
-                window.showToast('Xəta: ' + error.message, true);
-            } finally {
-                btn.innerText = originalText;
-                btn.disabled = false;
-            }
-        };
-
-        window.toggleAdminAuth = () => {
-            document.getElementById('password-modal').classList.remove('hidden');
-            document.getElementById('admin-pass').value = '';
-            document.getElementById('admin-pass').focus();
-        };
-
-        window.checkPassword = () => {
-            if (document.getElementById('admin-pass').value === '1975') {
-                window.closeModal('password-modal');
-                document.getElementById('admin-panel').classList.remove('hidden');
-            } else {
-                window.showToast('Yanlış Şifrə!', true);
-            }
-        };
-
-        window.closeModal = (id) => {
-            const modal = document.getElementById(id);
-            if (id === 'product-modal') {
-                document.getElementById('product-modal-card').classList.remove('scale-100', 'opacity-100');
-                document.getElementById('product-modal-card').classList.add('scale-90', 'opacity-0');
-                setTimeout(() => modal.classList.add('hidden'), 300);
-            } else {
-                modal.classList.add('hidden');
-            }
-        };
-
-        window.showToast = (msg, isError = false) => {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-msg').innerText = msg;
-            document.getElementById('toast-icon').innerHTML = isError ? 
-                '<i class="fa-solid fa-circle-exclamation text-red-400"></i>' : 
-                '<i class="fa-solid fa-check-circle text-green-400"></i>';
+            const pos = getMousePos(drawCanvas, e);
             
-            toast.classList.remove('-translate-y-32');
-            setTimeout(() => toast.classList.add('-translate-y-32'), 3000);
-        };
-        
-        window.handleDragOver = (e) => { e.preventDefault(); document.getElementById('drop-zone').classList.add('active'); };
-        window.handleDragLeave = (e) => { e.preventDefault(); document.getElementById('drop-zone').classList.remove('active'); };
+            // Input kutusunu konumlandır
+            textOverlay.style.left = (pos.x / (drawCanvas.width / drawCanvas.clientWidth)) + 'px';
+            textOverlay.style.top = (pos.y / (drawCanvas.height / drawCanvas.clientHeight)) + 'px';
+            textOverlay.style.display = 'block';
+            textOverlay.style.color = drawingColor;
+            textOverlay.style.fontSize = (lineWidth * 3 + 10) + 'px'; // Kalınlığa göre font boyutu
+            textOverlay.innerText = '';
+            textOverlay.focus();
+        });
+
+        // Yazıyı Canvas'a İşle (Enter veya dışarı tıklama)
+        function finalizeText() {
+            if (textOverlay.style.display === 'none' || textOverlay.innerText.trim() === '') {
+                textOverlay.style.display = 'none';
+                return;
+            }
+
+            const rect = textOverlay.getBoundingClientRect();
+            const canvasRect = drawCanvas.getBoundingClientRect();
+            
+            // Göreceli pozisyonu hesapla (Canvas'ın gerçek çözünürlüğüne göre)
+            const x = (rect.left - canvasRect.left) * (drawCanvas.width / canvasRect.width);
+            const y = (rect.top - canvasRect.top) * (drawCanvas.height / canvasRect.height); // + font boyutu kadar offset gerekebilir
+
+            drawCtx.font = `${textOverlay.style.fontSize} sans-serif`;
+            drawCtx.fillStyle = textOverlay.style.color;
+            drawCtx.textBaseline = 'top';
+            drawCtx.fillText(textOverlay.innerText, x, y + 2); // Ufak bir dikey düzeltme
+
+            textOverlay.innerText = '';
+            textOverlay.style.display = 'none';
+        }
+
+        // Canvas Temizleme
+        function clearCanvas() {
+            drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+        }
+
+        // Görüntü Olarak İndir (Merge PDF + Draw Layers)
+        function downloadPage() {
+            if(!pdfDoc) return;
+            
+            // Geçici bir canvas oluştur
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = pdfCanvas.width;
+            tempCanvas.height = pdfCanvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            // Önce PDF'i çiz
+            tempCtx.drawImage(pdfCanvas, 0, 0);
+            // Sonra çizimleri çiz
+            tempCtx.drawImage(drawCanvas, 0, 0);
+
+            // İndirme linki oluştur
+            const link = document.createElement('a');
+            link.download = `pdf-duzenlendi-sayfa-${pageNum}.png`;
+            link.href = tempCanvas.toDataURL('image/png');
+            link.click();
+        }
+
     </script>
 </body>
-</html>
+</html
