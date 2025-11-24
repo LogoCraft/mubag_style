@@ -2,182 +2,143 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Çizim ve Düzenleme Aracı</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Akıllı PDF Editörü</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- PDF.js Kütüphanesi -->
+    <!-- PDF.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <!-- Font Awesome İkonlar -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        primary: '#3b82f6',
-                        secondary: '#1e293b',
-                    },
-                    cursor: {
-                        'crosshair': 'crosshair',
-                        'text': 'text',
-                    }
+                    colors: { primary: '#3b82f6', secondary: '#1e293b' },
+                    cursor: { 'crosshair': 'crosshair', 'text': 'text' }
                 }
             }
         }
     </script>
     <style>
-        body {
-            background-color: #f3f4f6;
-            touch-action: none; /* Mobilde kaydırmayı engellemek için */
+        body { background-color: #f3f4f6; touch-action: none; user-select: none; overflow: hidden; }
+        #canvas-container {
+            overflow: auto;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            background-color: #525659; /* PDF okuyucu grisi */
+            padding: 20px;
         }
         #canvas-wrapper {
             position: relative;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            margin: 0 auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             background-color: white;
-            display: inline-block; /* İçeriğe göre genişlemesi için */
         }
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-        #pdf-render {
-            z-index: 1; /* Altta PDF */
-        }
-        #draw-layer {
-            z-index: 10; /* Üstte çizim katmanı */
-            cursor: crosshair;
-        }
-        .tool-btn {
-            transition: all 0.2s;
-        }
-        .tool-btn.active {
-            background-color: #e0e7ff;
-            color: #3b82f6;
-            border-color: #3b82f6;
-        }
+        canvas { position: absolute; top: 0; left: 0; }
+        #pdf-render { z-index: 1; }
+        #draw-layer { z-index: 10; }
+        .tool-btn { transition: all 0.2s; }
+        .tool-btn.active { background-color: #e0e7ff; color: #3b82f6; border-color: #3b82f6; }
+        .magic-active { background-color: #dbeafe !important; color: #7c3aed !important; border: 1px solid #7c3aed !important; }
+        
         #text-input-overlay {
-            position: absolute;
-            display: none;
-            z-index: 20;
-            background: transparent;
-            border: 1px dashed #3b82f6;
-            padding: 4px;
-            font-family: sans-serif;
-            outline: none;
-            min-width: 100px;
-            color: black;
-            font-size: 16px;
+            position: absolute; display: none; z-index: 20;
+            background: rgba(255, 255, 255, 0.8); border: 1px dashed #3b82f6;
+            padding: 4px; font-family: sans-serif; outline: none; min-width: 50px;
         }
-        /* Drop Zone */
-        #drop-zone {
-            transition: all 0.3s ease;
-        }
-        #drop-zone.dragover {
-            background-color: rgba(59, 130, 246, 0.1);
-            border-color: #3b82f6;
-            transform: scale(1.02);
-        }
+        /* Yükleme animasyonu */
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden text-slate-800">
+<body class="h-screen flex flex-col text-slate-800">
 
-    <!-- Üst Araç Çubuğu -->
-    <header class="bg-white border-b border-gray-200 px-4 py-3 shadow-sm flex items-center justify-between z-30 shrink-0">
-        <div class="flex items-center gap-4">
-            <h1 class="font-bold text-xl text-primary flex items-center gap-2">
-                <i class="fa-solid fa-file-pdf"></i> PDF<span class="text-slate-600 font-normal">Editör</span>
+    <!-- Üst Bar -->
+    <header class="bg-white border-b border-gray-200 px-3 py-2 shadow-sm flex items-center justify-between z-30 shrink-0 h-16">
+        <div class="flex items-center gap-3">
+            <h1 class="font-bold text-lg text-primary hidden md:flex items-center gap-1">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> PDF<span class="text-slate-600 font-normal">AI</span>
             </h1>
             
-            <!-- Dosya Yükleme -->
-            <label class="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-md text-sm transition font-medium">
-                <i class="fa-solid fa-upload mr-1"></i> PDF Aç
+            <label class="cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition flex items-center gap-1 border border-blue-200">
+                <i class="fa-solid fa-folder-open"></i> <span class="hidden sm:inline">PDF Aç</span>
                 <input type="file" id="file-input" accept="application/pdf" class="hidden">
             </label>
+            
+            <button onclick="clearStorage()" class="text-xs text-red-400 hover:text-red-600 underline" title="Kaydedilen verileri sil">Sıfırla</button>
         </div>
 
-        <!-- Araçlar -->
-        <div class="flex items-center gap-2 bg-slate-50 p-1.5 rounded-lg border border-gray-200" id="toolbar">
-            <button onclick="setTool('cursor')" id="btn-cursor" class="tool-btn active p-2 rounded hover:bg-white hover:shadow-sm" title="Seç / Taşı">
-                <i class="fa-solid fa-arrow-pointer"></i>
-            </button>
-            <div class="w-px h-6 bg-gray-300 mx-1"></div>
+        <!-- Toolbar -->
+        <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-gray-200 mx-2 overflow-x-auto">
+            <button onclick="undo()" class="tool-btn p-2 rounded hover:bg-white" title="Geri Al (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
+            <div class="w-px h-5 bg-gray-300 mx-1"></div>
             
-            <button onclick="setTool('pen')" id="btn-pen" class="tool-btn p-2 rounded hover:bg-white hover:shadow-sm" title="Kalem">
-                <i class="fa-solid fa-pen"></i>
-            </button>
+            <button onclick="setTool('cursor')" id="btn-cursor" class="tool-btn active p-2 rounded hover:bg-white"><i class="fa-solid fa-arrow-pointer"></i></button>
+            <button onclick="setTool('pen')" id="btn-pen" class="tool-btn p-2 rounded hover:bg-white"><i class="fa-solid fa-pen"></i></button>
+            <button onclick="setTool('eraser')" id="btn-eraser" class="tool-btn p-2 rounded hover:bg-white"><i class="fa-solid fa-eraser"></i></button>
+            <button onclick="setTool('text')" id="btn-text" class="tool-btn p-2 rounded hover:bg-white"><i class="fa-solid fa-font"></i></button>
             
-            <button onclick="setTool('text')" id="btn-text" class="tool-btn p-2 rounded hover:bg-white hover:shadow-sm" title="Metin Yaz">
-                <i class="fa-solid fa-font"></i>
-            </button>
-            
-            <button onclick="clearCanvas()" class="tool-btn p-2 rounded hover:bg-red-50 text-red-500 hover:text-red-600" title="Sayfayı Temizle">
-                <i class="fa-solid fa-trash"></i>
+            <div class="w-px h-5 bg-gray-300 mx-1"></div>
+
+            <!-- Akıllı Düzeltme Butonu -->
+            <button onclick="toggleSmartMode()" id="btn-magic" class="tool-btn p-2 rounded hover:bg-purple-50 text-gray-400" title="Akıllı Düzeltme (Şekil ve Yazı)">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
             </button>
 
-            <div class="w-px h-6 bg-gray-300 mx-1"></div>
-
-            <!-- Renk ve Boyut -->
-            <div class="flex items-center gap-2 px-2">
-                <input type="color" id="color-picker" value="#000000" class="w-8 h-8 rounded cursor-pointer border-0 bg-transparent">
-                <select id="line-width" class="bg-transparent text-sm border-b border-gray-300 focus:outline-none pb-1 w-16">
-                    <option value="2">İnce</option>
-                    <option value="5" selected>Orta</option>
-                    <option value="10">Kalın</option>
-                </select>
-            </div>
+            <!-- Renk -->
+            <input type="color" id="color-picker" value="#000000" class="w-7 h-7 rounded border-0 bg-transparent cursor-pointer">
         </div>
 
-        <!-- Kaydetme ve Sayfalama -->
-        <div class="flex items-center gap-3">
-            <div class="flex items-center gap-1 bg-slate-100 rounded-md px-2 py-1" id="pagination-controls" style="visibility: hidden;">
-                <button onclick="changePage(-1)" class="p-1 hover:text-primary"><i class="fa-solid fa-chevron-left"></i></button>
-                <span id="page-num" class="text-sm font-medium w-12 text-center">0 / 0</span>
-                <button onclick="changePage(1)" class="p-1 hover:text-primary"><i class="fa-solid fa-chevron-right"></i></button>
+        <!-- Zoom ve Sayfa -->
+        <div class="flex items-center gap-2">
+            <div class="flex items-center bg-slate-100 rounded-lg border border-gray-200">
+                <button onclick="changeZoom(-0.25)" class="p-2 hover:bg-slate-200 text-slate-600"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                <span id="zoom-level" class="text-xs font-mono w-10 text-center">100%</span>
+                <button onclick="changeZoom(0.25)" class="p-2 hover:bg-slate-200 text-slate-600"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
             </div>
-            <button onclick="downloadPage()" class="bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-md shadow-sm transition text-sm font-medium">
-                <i class="fa-solid fa-image mr-1"></i> İndir (Resim)
+            
+            <div class="hidden sm:flex items-center gap-1 bg-slate-100 rounded-lg px-2 py-1 border border-gray-200" id="pagination">
+                <button onclick="changePage(-1)" class="hover:text-primary"><i class="fa-solid fa-chevron-left"></i></button>
+                <span id="page-num" class="text-xs font-medium w-12 text-center">--/--</span>
+                <button onclick="changePage(1)" class="hover:text-primary"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+
+            <button onclick="downloadPDF()" class="bg-primary hover:bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm font-medium shadow-sm">
+                <i class="fa-solid fa-download"></i>
             </button>
         </div>
     </header>
 
-    <!-- Ana Çalışma Alanı -->
-    <main class="flex-1 overflow-auto bg-slate-200 relative flex justify-center p-8" id="main-container">
+    <!-- Main -->
+    <main id="canvas-container">
         
-        <!-- Sürükle Bırak Alanı (Başlangıçta Görünür) -->
-        <div id="drop-zone" class="absolute inset-4 border-4 border-dashed border-gray-300 bg-white rounded-xl flex flex-col items-center justify-center z-50">
-            <div class="text-center p-10">
-                <i class="fa-solid fa-file-pdf text-6xl text-gray-300 mb-4"></i>
-                <h2 class="text-2xl font-bold text-gray-700 mb-2">PDF Dosyasını Buraya Sürükleyin</h2>
-                <p class="text-gray-500 mb-6">veya yukarıdaki "PDF Aç" butonunu kullanın</p>
-                <button onclick="document.getElementById('file-input').click()" class="bg-primary text-white px-6 py-3 rounded-lg shadow hover:bg-blue-600 transition">
-                    Dosya Seç
-                </button>
+        <!-- Boş Durum -->
+        <div id="empty-state" class="flex flex-col items-center justify-center h-full text-gray-400">
+            <i class="fa-regular fa-file-pdf text-6xl mb-4"></i>
+            <p class="text-lg">PDF dosyanı sürükle veya yukarıdan aç.</p>
+            <div id="loading-indicator" class="hidden mt-4 flex items-center gap-2 text-blue-500">
+                <div class="loader"></div> <span>Yükleniyor...</span>
             </div>
         </div>
 
-        <!-- Canvas Wrapper (PDF + Çizim) -->
         <div id="canvas-wrapper" style="display: none;">
             <canvas id="pdf-render"></canvas>
             <canvas id="draw-layer"></canvas>
             <div id="text-input-overlay" contenteditable="true"></div>
         </div>
-
     </main>
 
     <script>
-        // PDF.js Worker ayarı (CDN kullanımı)
+        // PDF.js Worker
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        // Değişkenler
+        // Durum Değişkenleri
         let pdfDoc = null;
         let pageNum = 1;
-        let pageRendering = false;
-        let pageNumPending = null;
-        let scale = 1.5;
+        let scale = 1.0;
+        let canvasContainer = document.getElementById('canvas-container');
         let canvasWrapper = document.getElementById('canvas-wrapper');
         let pdfCanvas = document.getElementById('pdf-render');
         let drawCanvas = document.getElementById('draw-layer');
@@ -185,287 +146,487 @@
         let drawCtx = drawCanvas.getContext('2d');
         let textOverlay = document.getElementById('text-input-overlay');
         
-        // Araç durumu
-        let currentTool = 'cursor'; // cursor, pen, text
+        // Çizim Verileri (Vektörel Saklama - ÖNEMLİ: Zoom için)
+        // Yapı: { 1: [ {type: 'path', points: [...], color: 'red', ...}, {type: 'text', ...} ], 2: [...] }
+        let allAnnotations = {}; 
+        
+        let currentTool = 'cursor';
         let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
+        let currentPath = []; // Anlık çizilen noktalar
         let drawingColor = '#000000';
-        let lineWidth = 5;
+        let lineWidth = 3;
+        let isSmartMode = false;
 
-        // Dosya Yükleme Eventleri
-        const fileInput = document.getElementById('file-input');
-        const dropZone = document.getElementById('drop-zone');
+        // LocalStorage Keys
+        const LS_PDF_DATA = 'saved_pdf_data';
+        const LS_ANNOTATIONS = 'saved_annotations';
+        const LS_PAGE = 'saved_page_num';
 
-        fileInput.addEventListener('change', handleFileSelect);
+        // --- Başlangıç ---
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromStorage();
+        });
+
+        // --- Dosya İşlemleri ---
+        document.getElementById('file-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(file) loadPDFFromFile(file);
+        });
 
         // Drag & Drop
-        dropZone.addEventListener('dragover', (e) => {
-            e.stopPropagation();
+        document.body.addEventListener('dragover', e => e.preventDefault());
+        document.body.addEventListener('drop', (e) => {
             e.preventDefault();
-            e.dataTransfer.dropEffect = 'copy';
-            dropZone.classList.add('dragover');
-        });
-
-        dropZone.addEventListener('dragleave', (e) => {
-            dropZone.classList.remove('dragover');
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length > 0 && files[0].type === 'application/pdf') {
-                loadPDF(files[0]);
-            } else {
-                alert('Lütfen geçerli bir PDF dosyası yükleyin.');
+            if(e.dataTransfer.files[0]?.type === 'application/pdf') {
+                loadPDFFromFile(e.dataTransfer.files[0]);
             }
         });
 
-        function handleFileSelect(e) {
-            const file = e.target.files[0];
-            if (file && file.type === 'application/pdf') {
-                loadPDF(file);
-            }
-        }
+        function loadPDFFromFile(file) {
+            const reader = new FileReader();
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('loading-indicator').classList.remove('hidden'); // Basit loader
 
-        // PDF Yükleme
-        function loadPDF(file) {
-            const fileReader = new FileReader();
-            fileReader.onload = function() {
-                const typedarray = new Uint8Array(this.result);
-
-                pdfjsLib.getDocument(typedarray).promise.then(function(pdfDoc_) {
-                    pdfDoc = pdfDoc_;
-                    document.getElementById('drop-zone').style.display = 'none';
-                    canvasWrapper.style.display = 'block';
-                    document.getElementById('pagination-controls').style.visibility = 'visible';
-                    document.getElementById('page-num').textContent = `${pageNum} / ${pdfDoc.numPages}`;
-                    
-                    // İlk sayfayı renderla
-                    renderPage(pageNum);
-                });
+            reader.onload = function(e) {
+                const result = e.target.result;
+                // LocalStorage'a kaydetmeyi dene (Büyük dosyalarda hata verebilir)
+                try {
+                    localStorage.setItem(LS_PDF_DATA, result);
+                    allAnnotations = {}; // Yeni dosya, çizimleri sıfırla
+                    localStorage.removeItem(LS_ANNOTATIONS);
+                } catch(err) {
+                    console.warn("PDF çok büyük, LocalStorage'a kaydedilemedi. Sadece çizimler tutulacak.");
+                    alert("PDF dosyası çok büyük olduğu için tarayıcı belleğine kaydedilemedi. Sayfayı yenilerseniz dosyayı tekrar seçmeniz gerekecek.");
+                }
+                
+                loadPDFData(result);
             };
-            fileReader.readAsArrayBuffer(file);
+            reader.readAsDataURL(file);
         }
 
-        // Sayfa Renderlama
-        function renderPage(num) {
-            pageRendering = true;
-            
-            // PDF sayfasını al
-            pdfDoc.getPage(num).then(function(page) {
-                const viewport = page.getViewport({scale: scale});
-                
-                // Canvas boyutlarını ayarla
-                pdfCanvas.height = viewport.height;
-                pdfCanvas.width = viewport.width;
-                drawCanvas.height = viewport.height;
-                drawCanvas.width = viewport.width;
-                
-                canvasWrapper.style.width = viewport.width + 'px';
-                canvasWrapper.style.height = viewport.height + 'px';
+        async function loadFromStorage() {
+            const savedPdf = localStorage.getItem(LS_PDF_DATA);
+            const savedAnnots = localStorage.getItem(LS_ANNOTATIONS);
+            const savedPage = localStorage.getItem(LS_PAGE);
 
-                // PDF'i alt katmana çiz
-                const renderContext = {
-                    canvasContext: pdfCtx,
-                    viewport: viewport
-                };
-                
-                const renderTask = page.render(renderContext);
+            if (savedAnnots) {
+                allAnnotations = JSON.parse(savedAnnots);
+            }
 
-                renderTask.promise.then(function() {
-                    pageRendering = false;
-                    // Eğer bekleyen sayfa varsa onu çiz
-                    if (pageNumPending !== null) {
-                        renderPage(pageNumPending);
-                        pageNumPending = null;
-                    }
-                });
-            });
-
-            // Sayfa numarasını güncelle
-            document.getElementById('page-num').textContent = `${num} / ${pdfDoc.numPages}`;
-            
-            // Yeni sayfaya geçince çizimleri temizle (veya saklamak istersen burayı düzenle)
-            // Bu demo'da her sayfa değiştiğinde çizimler temizleniyor.
-            // Gelişmiş versiyonlarda çizimleri sayfa bazlı dizilerde saklayabiliriz.
-            clearCanvas(); 
-        }
-
-        function queueRenderPage(num) {
-            if (pageRendering) {
-                pageNumPending = num;
-            } else {
-                renderPage(num);
+            if (savedPdf) {
+                document.getElementById('empty-state').style.display = 'none';
+                if(savedPage) pageNum = parseInt(savedPage);
+                await loadPDFData(savedPdf);
             }
         }
 
-        function changePage(offset) {
-            if (!pdfDoc) return;
-            const newPage = pageNum + offset;
-            if (newPage >= 1 && newPage <= pdfDoc.numPages) {
+        function clearStorage() {
+            if(confirm('Tüm kayıtlı veriler silinecek. Emin misiniz?')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        async function loadPDFData(base64Data) {
+            const pdfData = atob(base64Data.split(',')[1]);
+            const loadingTask = pdfjsLib.getDocument({data: pdfData});
+            
+            try {
+                pdfDoc = await loadingTask.promise;
+                document.getElementById('canvas-wrapper').style.display = 'block';
+                document.getElementById('empty-state').style.display = 'none';
+                renderPage(pageNum);
+            } catch (error) {
+                console.error(error);
+                alert("PDF yüklenirken hata oluştu.");
+            }
+        }
+
+        // --- Render İşlemleri ---
+        async function renderPage(num) {
+            if(!pdfDoc) return;
+            
+            const page = await pdfDoc.getPage(num);
+            const viewport = page.getViewport({scale: scale});
+
+            pdfCanvas.height = viewport.height;
+            pdfCanvas.width = viewport.width;
+            drawCanvas.height = viewport.height;
+            drawCanvas.width = viewport.width;
+            
+            canvasWrapper.style.width = `${viewport.width}px`;
+            canvasWrapper.style.height = `${viewport.height}px`;
+
+            await page.render({canvasContext: pdfCtx, viewport: viewport}).promise;
+
+            document.getElementById('page-num').innerText = `${num} / ${pdfDoc.numPages}`;
+            document.getElementById('zoom-level').innerText = `${Math.round(scale * 100)}%`;
+
+            // Çizimleri yeniden çiz (Zoom'a uygun olarak)
+            redrawAnnotations();
+            
+            // Kaydet
+            localStorage.setItem(LS_PAGE, num);
+        }
+
+        function changeZoom(delta) {
+            const newScale = scale + delta;
+            if (newScale >= 0.5 && newScale <= 3.0) {
+                scale = newScale;
+                renderPage(pageNum);
+            }
+        }
+
+        function changePage(delta) {
+            if(!pdfDoc) return;
+            const newPage = pageNum + delta;
+            if(newPage >= 1 && newPage <= pdfDoc.numPages) {
                 pageNum = newPage;
-                queueRenderPage(pageNum);
+                renderPage(pageNum);
             }
         }
 
-        // Araç Seçimi
-        function setTool(tool) {
-            currentTool = tool;
+        // --- Çizim ve Akıllı Düzeltme Mantığı ---
+
+        function getNormalizedPos(e) {
+            // Mouse pozisyonunu 0.0 - 1.0 arasına normalize et (Zoom bağımsızlığı için)
+            const rect = drawCanvas.getBoundingClientRect();
+            let clientX = e.clientX;
+            let clientY = e.clientY;
             
-            // UI Güncelleme
-            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`btn-${tool}`).classList.add('active');
-
-            // İmleç Ayarı
-            if (tool === 'pen') {
-                drawCanvas.style.cursor = 'crosshair';
-            } else if (tool === 'text') {
-                drawCanvas.style.cursor = 'text';
-            } else {
-                drawCanvas.style.cursor = 'default';
+            if(e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
             }
-        }
 
-        // Renk ve Boyut Ayarları
-        document.getElementById('color-picker').addEventListener('change', (e) => {
-            drawingColor = e.target.value;
-            if(textOverlay.style.display === 'block') {
-                textOverlay.style.color = drawingColor;
-            }
-        });
-
-        document.getElementById('line-width').addEventListener('change', (e) => {
-            lineWidth = parseInt(e.target.value);
-        });
-
-        // Çizim İşlemleri (Mouse & Touch)
-        function startPosition(e) {
-            if (currentTool !== 'pen') return;
-            isDrawing = true;
-            draw(e);
-        }
-
-        function endPosition() {
-            isDrawing = false;
-            drawCtx.beginPath();
-        }
-
-        function getMousePos(canvas, evt) {
-            const rect = canvas.getBoundingClientRect();
-            // Mouse veya Touch eventi kontrolü
-            const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
-            const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
-            
             return {
-                x: (clientX - rect.left) * (canvas.width / rect.width),
-                y: (clientY - rect.top) * (canvas.height / rect.height)
+                x: (clientX - rect.left) / (rect.width),
+                y: (clientY - rect.top) / (rect.height)
             };
+        }
+
+        drawCanvas.addEventListener('mousedown', startDrawing);
+        drawCanvas.addEventListener('touchstart', startDrawing, {passive: false});
+        
+        drawCanvas.addEventListener('mousemove', draw);
+        drawCanvas.addEventListener('touchmove', draw, {passive: false});
+        
+        drawCanvas.addEventListener('mouseup', stopDrawing);
+        drawCanvas.addEventListener('touchend', stopDrawing);
+
+        function startDrawing(e) {
+            if (currentTool === 'cursor') return;
+            if (currentTool === 'text') { handleTextClick(e); return; }
+
+            isDrawing = true;
+            currentPath = []; 
+            const pos = getNormalizedPos(e);
+            currentPath.push(pos);
+            
+            drawCtx.beginPath();
+            drawCtx.moveTo(pos.x * drawCanvas.width, pos.y * drawCanvas.height);
+            drawCtx.lineCap = 'round';
+            drawCtx.lineJoin = 'round';
+            drawCtx.lineWidth = lineWidth;
+            drawCtx.strokeStyle = drawingColor;
         }
 
         function draw(e) {
-            if (!isDrawing || currentTool !== 'pen') return;
-            e.preventDefault(); // Sayfa kaymasını engelle
+            if (!isDrawing) return;
+            e.preventDefault();
+            
+            const pos = getNormalizedPos(e);
+            currentPath.push(pos);
 
-            const pos = getMousePos(drawCanvas, e);
-
-            drawCtx.lineWidth = lineWidth;
-            drawCtx.lineCap = 'round';
-            drawCtx.strokeStyle = drawingColor;
-
-            drawCtx.lineTo(pos.x, pos.y);
+            // Anlık çizim (Görsel geri bildirim)
+            drawCtx.lineTo(pos.x * drawCanvas.width, pos.y * drawCanvas.height);
             drawCtx.stroke();
-            drawCtx.beginPath();
-            drawCtx.moveTo(pos.x, pos.y);
+            
+            if (currentTool === 'eraser') {
+                // Silgi efekti için geçici çizim (Kırmızı kutu vs yerine direkt siliyormuş gibi)
+                // Ama asıl silme işlemi mouseup'ta data üzerinden yapılacak
+            }
         }
 
-        // Event Listeners for Drawing
-        drawCanvas.addEventListener('mousedown', startPosition);
-        drawCanvas.addEventListener('mouseup', endPosition);
-        drawCanvas.addEventListener('mousemove', draw);
-        
-        // Touch support
-        drawCanvas.addEventListener('touchstart', startPosition, {passive: false});
-        drawCanvas.addEventListener('touchend', endPosition);
-        drawCanvas.addEventListener('touchmove', draw, {passive: false});
+        function stopDrawing() {
+            if (!isDrawing) return;
+            isDrawing = false;
+            drawCtx.closePath();
 
-        // Metin Ekleme İşlemleri
-        drawCanvas.addEventListener('click', (e) => {
-            if (currentTool !== 'text') {
-                finalizeText(); // Başka yere tıklarsa mevcut yazıyı bitir
-                return;
+            if (currentTool === 'pen') {
+                let finalPath = currentPath;
+                let type = 'path';
+
+                // --- AKILLI DÜZELTME (MAGIC MODE) ---
+                if (isSmartMode) {
+                    const shape = detectShape(currentPath);
+                    if (shape) {
+                        type = shape.type;
+                        finalPath = shape.data; // Daire için {x,y,r}, Kare için {x,y,w,h}
+                    } else {
+                        // Şekil bulunamadıysa yumuşatma uygula
+                        finalPath = simplifyPath(currentPath, 0.001); // 0.001 tolerans
+                    }
+                }
+
+                addAnnotation({
+                    tool: 'pen',
+                    type: type,
+                    points: finalPath,
+                    color: drawingColor,
+                    width: lineWidth
+                });
+            } else if (currentTool === 'eraser') {
+                // Silgi: Çizilen yolun kestiği tüm objeleri sil
+                eraseObjectsIntersecting(currentPath);
+            }
+
+            redrawAnnotations();
+            saveAnnotations();
+        }
+
+        // --- Veri Yönetimi ---
+        function addAnnotation(annot) {
+            if (!allAnnotations[pageNum]) allAnnotations[pageNum] = [];
+            allAnnotations[pageNum].push(annot);
+        }
+
+        function saveAnnotations() {
+            localStorage.setItem(LS_ANNOTATIONS, JSON.stringify(allAnnotations));
+        }
+
+        function undo() {
+            if (allAnnotations[pageNum] && allAnnotations[pageNum].length > 0) {
+                allAnnotations[pageNum].pop();
+                redrawAnnotations();
+                saveAnnotations();
+            }
+        }
+
+        // --- Çizim Motoru (Redraw) ---
+        function redrawAnnotations() {
+            // Canvası temizle
+            drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+            
+            const pageAnnots = allAnnotations[pageNum] || [];
+            const w = drawCanvas.width;
+            const h = drawCanvas.height;
+
+            pageAnnots.forEach(annot => {
+                drawCtx.strokeStyle = annot.color;
+                drawCtx.fillStyle = annot.color;
+                drawCtx.lineWidth = annot.width;
+                drawCtx.lineCap = 'round';
+                drawCtx.lineJoin = 'round';
+                drawCtx.beginPath();
+
+                if (annot.type === 'path') {
+                    // Normal Çizim
+                    if(annot.points.length === 0) return;
+                    drawCtx.moveTo(annot.points[0].x * w, annot.points[0].y * h);
+                    for (let i = 1; i < annot.points.length; i++) {
+                        drawCtx.lineTo(annot.points[i].x * w, annot.points[i].y * h);
+                    }
+                    drawCtx.stroke();
+                } 
+                else if (annot.type === 'circle') {
+                    // Akıllı Daire
+                    const { cx, cy, r } = annot.points;
+                    drawCtx.arc(cx * w, cy * h, r * w, 0, Math.PI * 2); // r X eksenine göre scale edilir
+                    drawCtx.stroke();
+                }
+                else if (annot.type === 'rect') {
+                    // Akıllı Dikdörtgen
+                    const { x, y, rw, rh } = annot.points;
+                    drawCtx.strokeRect(x * w, y * h, rw * w, rh * h);
+                }
+                else if (annot.type === 'text') {
+                    // Metin
+                    drawCtx.font = `${annot.fontSize * scale}px sans-serif`; // Font scale ile büyümeli
+                    drawCtx.textBaseline = 'top';
+                    drawCtx.fillText(annot.text, annot.x * w, annot.y * h);
+                }
+            });
+        }
+
+        // --- Akıllı Algoritmalar ---
+
+        // 1. Yol Yumuşatma (Douglas-Peucker Basitleştirmesi benzeri)
+        // El yazısını "daha güzel" ve pürüzsüz gösterir.
+        function simplifyPath(points, tolerance) {
+            if (points.length <= 2) return points;
+            // Basit bir yöntem: Her 3. noktayı al veya mesafeye bak (Burada basitleştirilmiş örnek)
+            // Daha gelişmişi için Ramer-Douglas-Peucker algoritması gerekir ama 
+            // performansı korumak için basit bir "mesafe filtresi" uygulayalım.
+            const newPoints = [points[0]];
+            let lastPoint = points[0];
+
+            for(let i=1; i<points.length; i++) {
+                const p = points[i];
+                const dist = Math.hypot(p.x - lastPoint.x, p.y - lastPoint.y);
+                if(dist > 0.005) { // Eşik değeri
+                    newPoints.push(p);
+                    lastPoint = p;
+                }
+            }
+            newPoints.push(points[points.length-1]);
+            return newPoints;
+        }
+
+        // 2. Şekil Algılama (Daire ve Dikdörtgen)
+        function detectShape(points) {
+            if (points.length < 10) return null; // Çok kısa çizgi şekil olamaz
+
+            const start = points[0];
+            const end = points[points.length - 1];
+            
+            // Bounding Box Hesapla
+            let minX = 1, maxX = 0, minY = 1, maxY = 0;
+            points.forEach(p => {
+                if(p.x < minX) minX = p.x;
+                if(p.x > maxX) maxX = p.x;
+                if(p.y < minY) minY = p.y;
+                if(p.y > maxY) maxY = p.y;
+            });
+            const width = maxX - minX;
+            const height = maxY - minY;
+
+            // Uç noktalar birbirine yakın mı? (Kapalı şekil kontrolü)
+            const closureDist = Math.hypot(start.x - end.x, start.y - end.y);
+            const isClosed = closureDist < 0.1; // %10'dan az açıklık varsa kapalı say
+
+            if (isClosed) {
+                // Daire Kontrolü
+                // Merkezden tüm noktalara olan mesafenin varyansına bakılır.
+                const cx = minX + width/2;
+                const cy = minY + height/2;
+                const r = width / 2; // Basit yarıçap
+                
+                // Basit heuristik: En boy oranı kareye yakınsa dairedir (veya karedir)
+                const aspectRatio = width / height;
+                
+                if (aspectRatio > 0.8 && aspectRatio < 1.2) {
+                    return {
+                        type: 'circle',
+                        data: { cx, cy, r }
+                    };
+                }
+                
+                // Değilse Dikdörtgen varsay
+                return {
+                    type: 'rect',
+                    data: { x: minX, y: minY, rw: width, rh: height }
+                };
             }
             
-            // Eğer zaten yazı yazıyorsak, önce onu tamamla
+            // Çizgi düzeltme (Eğer başlangıç ve bitiş uzak ama noktalar doğrusalsa)
+            // Bu örnekte sadece kapalı şekillere odaklandım.
+            return null;
+        }
+
+        // --- Silgi Mantığı (Intersection) ---
+        function eraseObjectsIntersecting(erasePath) {
+            // Silgi yolunun "Bounding Box"ını al ve bu alana giren çizimleri sil
+            if (!allAnnotations[pageNum]) return;
+            
+            // Basit Silme: Silginin son noktasına yakın olanları sil
+            const eraserPos = erasePath[erasePath.length-1];
+            const threshold = 0.05; // Silgi büyüklüğü (Normalize edilmiş)
+
+            allAnnotations[pageNum] = allAnnotations[pageNum].filter(annot => {
+                if (annot.type === 'path') {
+                    // Çizginin herhangi bir noktası silgiye yakın mı?
+                    return !annot.points.some(p => Math.hypot(p.x - eraserPos.x, p.y - eraserPos.y) < threshold);
+                }
+                else if (annot.type === 'circle') {
+                    const {cx, cy} = annot.points;
+                    return Math.hypot(cx - eraserPos.x, cy - eraserPos.y) > (annot.points.r + threshold);
+                }
+                // Dikdörtgen ve text için benzer kontroller eklenebilir
+                return true; 
+            });
+        }
+
+        // --- Metin Aracı ---
+        function handleTextClick(e) {
             if (textOverlay.style.display === 'block') {
                 finalizeText();
                 return;
             }
-
-            const pos = getMousePos(drawCanvas, e);
+            const pos = getNormalizedPos(e);
             
-            // Input kutusunu konumlandır
-            textOverlay.style.left = (pos.x / (drawCanvas.width / drawCanvas.clientWidth)) + 'px';
-            textOverlay.style.top = (pos.y / (drawCanvas.height / drawCanvas.clientHeight)) + 'px';
+            textOverlay.style.left = (pos.x * drawCanvas.width) + 'px';
+            textOverlay.style.top = (pos.y * drawCanvas.height) + 'px';
             textOverlay.style.display = 'block';
             textOverlay.style.color = drawingColor;
-            textOverlay.style.fontSize = (lineWidth * 3 + 10) + 'px'; // Kalınlığa göre font boyutu
+            textOverlay.style.fontSize = '16px';
             textOverlay.innerText = '';
             textOverlay.focus();
-        });
+            
+            // Konumu sakla
+            textOverlay.dataset.nx = pos.x;
+            textOverlay.dataset.ny = pos.y;
+        }
 
-        // Yazıyı Canvas'a İşle (Enter veya dışarı tıklama)
         function finalizeText() {
             if (textOverlay.style.display === 'none' || textOverlay.innerText.trim() === '') {
                 textOverlay.style.display = 'none';
                 return;
             }
-
-            const rect = textOverlay.getBoundingClientRect();
-            const canvasRect = drawCanvas.getBoundingClientRect();
             
-            // Göreceli pozisyonu hesapla (Canvas'ın gerçek çözünürlüğüne göre)
-            const x = (rect.left - canvasRect.left) * (drawCanvas.width / canvasRect.width);
-            const y = (rect.top - canvasRect.top) * (drawCanvas.height / canvasRect.height); // + font boyutu kadar offset gerekebilir
-
-            drawCtx.font = `${textOverlay.style.fontSize} sans-serif`;
-            drawCtx.fillStyle = textOverlay.style.color;
-            drawCtx.textBaseline = 'top';
-            drawCtx.fillText(textOverlay.innerText, x, y + 2); // Ufak bir dikey düzeltme
+            addAnnotation({
+                tool: 'text',
+                type: 'text',
+                text: textOverlay.innerText,
+                x: parseFloat(textOverlay.dataset.nx),
+                y: parseFloat(textOverlay.dataset.ny),
+                color: drawingColor,
+                fontSize: 16 // Varsayılan boyut
+            });
 
             textOverlay.innerText = '';
             textOverlay.style.display = 'none';
+            redrawAnnotations();
+            saveAnnotations();
         }
 
-        // Canvas Temizleme
-        function clearCanvas() {
-            drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
-        }
-
-        // Görüntü Olarak İndir (Merge PDF + Draw Layers)
-        function downloadPage() {
-            if(!pdfDoc) return;
+        // --- Helper Functions ---
+        function setTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.getElementById(`btn-${tool}`);
+            if(btn) btn.classList.add('active');
             
-            // Geçici bir canvas oluştur
+            if(tool === 'pen') drawCanvas.style.cursor = 'crosshair';
+            else if(tool === 'text') drawCanvas.style.cursor = 'text';
+            else drawCanvas.style.cursor = 'default';
+        }
+
+        function toggleSmartMode() {
+            isSmartMode = !isSmartMode;
+            const btn = document.getElementById('btn-magic');
+            if(isSmartMode) btn.classList.add('magic-active');
+            else btn.classList.remove('magic-active');
+        }
+
+        document.getElementById('color-picker').addEventListener('change', (e) => drawingColor = e.target.value);
+        
+        function downloadPDF() {
+            // Şimdilik sadece görünen sayfayı resim olarak indirir
+            // Tam PDF indirme için pdf-lib gibi kütüphaneler gerekir (single-file için ağır olur)
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = pdfCanvas.width;
             tempCanvas.height = pdfCanvas.height;
-            const tempCtx = tempCanvas.getContext('2d');
-
-            // Önce PDF'i çiz
-            tempCtx.drawImage(pdfCanvas, 0, 0);
-            // Sonra çizimleri çiz
-            tempCtx.drawImage(drawCanvas, 0, 0);
-
-            // İndirme linki oluştur
+            const ctx = tempCanvas.getContext('2d');
+            ctx.drawImage(pdfCanvas, 0, 0);
+            ctx.drawImage(drawCanvas, 0, 0);
+            
             const link = document.createElement('a');
-            link.download = `pdf-duzenlendi-sayfa-${pageNum}.png`;
-            link.href = tempCanvas.toDataURL('image/png');
+            link.download = 'notlu-sayfa.png';
+            link.href = tempCanvas.toDataURL();
             link.click();
         }
 
     </script>
 </body>
-</html
+</html>
