@@ -1,631 +1,544 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="az">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Akıllı PDF Editörü</title>
-    <!-- Tailwind CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mubag Style - Dəb və Zəriflik</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- PDF.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <!-- Google Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: { primary: '#3b82f6', secondary: '#1e293b' },
-                    cursor: { 'crosshair': 'crosshair', 'text': 'text' }
+                    colors: {
+                        mubagRed: '#DC2626', // Canlı Qırmızı
+                        mubagWhite: '#FFFFFF', // Təmiz Ağ
+                        mubagGray: '#F3F4F6', // Açıq Boz (Arxa plan üçün)
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
                 }
             }
         }
     </script>
     <style>
-        body { background-color: #f3f4f6; touch-action: none; user-select: none; overflow: hidden; }
-        #canvas-container {
-            overflow: auto;
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            background-color: #525659; /* PDF okuyucu grisi */
-            padding: 20px;
+        body {
+            background-color: #F3F4F6;
+            -webkit-tap-highlight-color: transparent;
         }
-        #canvas-wrapper {
-            position: relative;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            background-color: white;
-        }
-        canvas { position: absolute; top: 0; left: 0; }
-        #pdf-render { z-index: 1; }
-        #draw-layer { z-index: 10; }
-        .tool-btn { transition: all 0.2s; }
-        .tool-btn.active { background-color: #e0e7ff; color: #3b82f6; border-color: #3b82f6; }
-        .magic-active { background-color: #dbeafe !important; color: #7c3aed !important; border: 1px solid #7c3aed !important; }
         
-        #text-input-overlay {
-            position: absolute; display: none; z-index: 20;
-            background: rgba(255, 255, 255, 0.8); border: 1px dashed #3b82f6;
-            padding: 4px; font-family: sans-serif; outline: none; min-width: 50px;
+        html {
+            scroll-behavior: smooth;
         }
-        /* Yükleme animasyonu */
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Məhsul Kartı Animasiyası */
+        .product-card {
+            transition: all 0.3s ease;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(220, 38, 38, 0.3);
+        }
+
+        /* Səbət Animasiyası */
+        #cart-sidebar {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Düymə Parlaması */
+        .btn-glow:hover {
+            box-shadow: 0 0 15px rgba(220, 38, 38, 0.5);
+        }
+
+        /* Modal (Pəncərə) Animasiyası */
+        #product-modal {
+            transition: opacity 0.3s ease;
+        }
+        #product-modal-content {
+            transition: transform 0.3s ease;
+        }
+
+        /* Scrollbar Gizlətmə */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Thumbnail aktiv halı */
+        .thumb-active {
+            border-color: #DC2626;
+            opacity: 1;
+        }
     </style>
 </head>
-<body class="h-screen flex flex-col text-slate-800">
+<body class="text-gray-800 font-sans antialiased">
 
-    <!-- Üst Bar -->
-    <header class="bg-white border-b border-gray-200 px-3 py-2 shadow-sm flex items-center justify-between z-30 shrink-0 h-16">
-        <div class="flex items-center gap-3">
-            <h1 class="font-bold text-lg text-primary hidden md:flex items-center gap-1">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> PDF<span class="text-slate-600 font-normal">AI</span>
-            </h1>
-            
-            <label class="cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition flex items-center gap-1 border border-blue-200">
-                <i class="fa-solid fa-folder-open"></i> <span class="hidden sm:inline">PDF Aç</span>
-                <input type="file" id="file-input" accept="application/pdf" class="hidden">
-            </label>
-            
-            <button onclick="clearStorage()" class="text-xs text-red-400 hover:text-red-600 underline" title="Kaydedilen verileri sil">Sıfırla</button>
+    <!-- Navbar -->
+    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo (İkon silindi) -->
+                <a href="#" class="text-3xl font-black tracking-tighter text-mubagRed flex items-center gap-2">
+                    Mubag<span class="text-gray-800">Style</span>
+                </a>
+
+                <!-- Desktop Menyu -->
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#kolleksiya" class="text-gray-600 hover:text-mubagRed font-semibold transition">Kolleksiya</a>
+                    <a href="#haqqimizda" class="text-gray-600 hover:text-mubagRed font-semibold transition">Haqqımızda</a>
+                    <a href="#elaqe" class="text-gray-600 hover:text-mubagRed font-semibold transition">Əlaqə</a>
+                </nav>
+
+                <!-- Sağ Tərəf (Səbət) -->
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleCart()" class="relative p-2 text-gray-600 hover:text-mubagRed transition hover:bg-red-50 rounded-full">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                        <span id="cart-count" class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-mubagRed rounded-full opacity-0 transition-opacity">0</span>
+                    </button>
+                    
+                    <button onclick="toggleMenu()" class="md:hidden p-2 text-gray-600 hover:text-mubagRed rounded-md">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    </button>
+                </div>
+            </div>
         </div>
 
-        <!-- Toolbar -->
-        <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-gray-200 mx-2 overflow-x-auto">
-            <button onclick="undo()" class="tool-btn p-2 rounded hover:bg-white" title="Geri Al (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
-            <div class="w-px h-5 bg-gray-300 mx-1"></div>
-            
-            <button onclick="setTool('cursor')" id="btn-cursor" class="tool-btn active p-2 rounded hover:bg-white"><i class="fa-solid fa-arrow-pointer"></i></button>
-            <button onclick="setTool('pen')" id="btn-pen" class="tool-btn p-2 rounded hover:bg-white"><i class="fa-solid fa-pen"></i></button>
-            <button onclick="setTool('eraser')" id="btn-eraser" class="tool-btn p-2 rounded hover:bg-white"><i class="fa-solid fa-eraser"></i></button>
-            <button onclick="setTool('text')" id="btn-text" class="tool-btn p-2 rounded hover:bg-white"><i class="fa-solid fa-font"></i></button>
-            
-            <div class="w-px h-5 bg-gray-300 mx-1"></div>
-
-            <!-- Akıllı Düzeltme Butonu -->
-            <button onclick="toggleSmartMode()" id="btn-magic" class="tool-btn p-2 rounded hover:bg-purple-50 text-gray-400" title="Akıllı Düzeltme (Şekil ve Yazı)">
-                <i class="fa-solid fa-wand-magic-sparkles"></i>
-            </button>
-
-            <!-- Renk -->
-            <input type="color" id="color-picker" value="#000000" class="w-7 h-7 rounded border-0 bg-transparent cursor-pointer">
-        </div>
-
-        <!-- Zoom ve Sayfa -->
-        <div class="flex items-center gap-2">
-            <div class="flex items-center bg-slate-100 rounded-lg border border-gray-200">
-                <button onclick="changeZoom(-0.25)" class="p-2 hover:bg-slate-200 text-slate-600"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
-                <span id="zoom-level" class="text-xs font-mono w-10 text-center">100%</span>
-                <button onclick="changeZoom(0.25)" class="p-2 hover:bg-slate-200 text-slate-600"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+        <!-- Mobil Menyu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 absolute w-full left-0 top-16 shadow-lg">
+            <div class="flex flex-col p-4 space-y-3">
+                <a href="#kolleksiya" onclick="toggleMenu()" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-mubagRed hover:bg-red-50">Kolleksiya</a>
+                <a href="#haqqimizda" onclick="toggleMenu()" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-mubagRed hover:bg-red-50">Haqqımızda</a>
+                <a href="#elaqe" onclick="toggleMenu()" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-mubagRed hover:bg-red-50">Əlaqə</a>
             </div>
-            
-            <div class="hidden sm:flex items-center gap-1 bg-slate-100 rounded-lg px-2 py-1 border border-gray-200" id="pagination">
-                <button onclick="changePage(-1)" class="hover:text-primary"><i class="fa-solid fa-chevron-left"></i></button>
-                <span id="page-num" class="text-xs font-medium w-12 text-center">--/--</span>
-                <button onclick="changePage(1)" class="hover:text-primary"><i class="fa-solid fa-chevron-right"></i></button>
-            </div>
-
-            <button onclick="downloadPDF()" class="bg-primary hover:bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm font-medium shadow-sm">
-                <i class="fa-solid fa-download"></i>
-            </button>
         </div>
     </header>
 
-    <!-- Main -->
-    <main id="canvas-container">
-        
-        <!-- Boş Durum -->
-        <div id="empty-state" class="flex flex-col items-center justify-center h-full text-gray-400">
-            <i class="fa-regular fa-file-pdf text-6xl mb-4"></i>
-            <p class="text-lg">PDF dosyanı sürükle veya yukarıdan aç.</p>
-            <div id="loading-indicator" class="hidden mt-4 flex items-center gap-2 text-blue-500">
-                <div class="loader"></div> <span>Yükleniyor...</span>
+    <!-- Hero Bölməsi (Dalğa silindi) -->
+    <section class="relative bg-mubagRed overflow-hidden pb-10">
+        <div class="absolute inset-0 opacity-10 pattern-dots"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 flex flex-col items-center text-center relative z-10">
+            <h1 class="text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight">
+                Tərzini <span class="text-red-200">Kəşf Et</span>, <br> Fərqini Göstər.
+            </h1>
+            <p class="text-red-100 text-lg md:text-xl max-w-2xl mb-10">
+                Mubag Style ilə ən dəbli çantalar bir toxunuş qədər yaxın. Keyfiyyət və zərifliyin qırmızı tonları.
+            </p>
+            <a href="#kolleksiya" class="bg-white text-mubagRed px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:bg-gray-100 hover:scale-105 transition transform btn-glow">
+                İndi Alış-Veriş Et
+            </a>
+        </div>
+    </section>
+
+    <!-- Haqqımızda Bölməsi (YENİLƏNDİ) -->
+    <section id="haqqimizda" class="py-12 bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-gray-900">Mubag Style Fərqi</h2>
+                <p class="text-gray-500 mt-2">Niyə bizi seçməlisiniz?</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                <!-- Xüsusiyyət 1 -->
+                <div class="p-6 bg-gray-50 rounded-2xl hover:shadow-md transition">
+                    <div class="w-16 h-16 bg-red-100 text-mubagRed rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                        💎
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Yüksək Keyfiyyət</h3>
+                    <p class="text-gray-600">Hər bir məhsul incəliklə seçilir və uzunömürlü istifadə üçün ən keyfiyyətli materiallardan hazırlanır.</p>
+                </div>
+
+                <!-- Xüsusiyyət 2 -->
+                <div class="p-6 bg-gray-50 rounded-2xl hover:shadow-md transition">
+                    <div class="w-16 h-16 bg-red-100 text-mubagRed rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                        🏷️
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Sərfəli Qiymət</h3>
+                    <p class="text-gray-600">Dəb hamı üçün əlçatan olmalıdır. Ən trend çantaları cibinizə uyğun qiymətlərlə təklif edirik.</p>
+                </div>
+
+                <!-- Xüsusiyyət 3 -->
+                <div class="p-6 bg-gray-50 rounded-2xl hover:shadow-md transition">
+                    <div class="w-16 h-16 bg-red-100 text-mubagRed rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                        ✨
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Müasir Dizayn</h3>
+                    <p class="text-gray-600">Dünya dəbini yaxından izləyir və hər mövsümə uyğun, göz oxşayan modellər gətiririk.</p>
+                </div>
             </div>
         </div>
+    </section>
 
-        <div id="canvas-wrapper" style="display: none;">
-            <canvas id="pdf-render"></canvas>
-            <canvas id="draw-layer"></canvas>
-            <div id="text-input-overlay" contenteditable="true"></div>
+    <!-- Kolleksiya Bölməsi -->
+    <section id="kolleksiya" class="py-16 bg-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between mb-10">
+                <h2 class="text-3xl font-bold text-gray-900 border-l-4 border-mubagRed pl-4">Xüsusi Məhsullar</h2>
+            </div>
+            
+            <!-- Məhsullar Buraya Yüklənəcək -->
+            <div id="product-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- JS Kodu buranı dolduracaq -->
+            </div>
         </div>
-    </main>
+    </section>
 
+    <!-- Əlaqə Bölməsi (WhatsApp) -->
+    <section id="elaqe" class="py-16 bg-white">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">Bizimlə Əlaqə</h2>
+            <p class="text-gray-600 mb-8">Sifariş vermək və ya suallarınız üçün birbaşa WhatsApp-dan yaza bilərsiniz.</p>
+            
+            <a href="https://wa.me/994707841414" target="_blank" class="inline-flex items-center justify-center gap-3 bg-green-500 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-green-600 transition shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                WhatsApp (+994 70 784 14 14)
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-8 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <h3 class="text-xl font-bold text-mubagRed mb-2">Mubag Style</h3>
+            <p class="text-gray-400 text-sm mb-4">Azərbaycan, Bakı</p>
+            <p class="text-gray-500 text-xs">&copy; 2025 Bütün hüquqlar qorunur.</p>
+        </div>
+    </footer>
+
+    <!-- Səbət Yan Paneli -->
+    <div id="cart-sidebar" class="fixed inset-y-0 right-0 z-50 w-full sm:w-96 bg-white shadow-2xl transform translate-x-full">
+        <div class="flex flex-col h-full">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h2 class="text-xl font-bold text-gray-800">Səbətim</h2>
+                <button onclick="toggleCart()" class="text-gray-500 hover:text-mubagRed">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="cart-items" class="flex-1 overflow-y-auto p-6 space-y-4">
+                <div class="text-center text-gray-500 mt-10">Səbətiniz boşdur.</div>
+            </div>
+            <div class="border-t p-6 bg-gray-50">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-lg font-semibold text-gray-600">Cəmi:</span>
+                    <span id="cart-total" class="text-2xl font-bold text-mubagRed">0 ₼</span>
+                </div>
+                <a href="https://wa.me/994707841414?text=Salam,%20sifariş%20vermək%20istəyirəm." target="_blank" class="block w-full bg-mubagRed text-white text-center py-3 rounded-xl font-bold hover:bg-red-700 transition">
+                    Sifarişi Tamamla
+                </a>
+            </div>
+        </div>
+    </div>
+    <div id="cart-overlay" onclick="toggleCart()" class="fixed inset-0 bg-black/50 z-40 hidden backdrop-blur-sm transition-opacity"></div>
+
+    <!-- MƏHSUL DETALLARI MODALI (QALEREYA) -->
+    <div id="product-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <!-- Arxa fon qaralması -->
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeProductModal()"></div>
+        
+        <!-- Modal Məzmunu -->
+        <div id="product-modal-content" class="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
+            <!-- Bağla düyməsi -->
+            <button onclick="closeProductModal()" class="absolute top-4 right-4 z-10 bg-white/80 p-2 rounded-full hover:bg-white text-gray-800 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+
+            <!-- Sol Tərəf: Şəkil Qalereyası -->
+            <div class="w-full md:w-1/2 bg-gray-100 p-4 flex flex-col">
+                <div class="flex-1 flex items-center justify-center mb-4 overflow-hidden rounded-xl bg-white border border-gray-200 h-64 md:h-auto">
+                    <img id="modal-main-image" src="" alt="Məhsul" class="w-full h-full object-contain p-2">
+                </div>
+                <!-- Balaca şəkillər (Thumbnails) -->
+                <div id="modal-thumbnails" class="flex gap-2 overflow-x-auto py-2 px-1">
+                    <!-- JS ilə dolacaq -->
+                </div>
+            </div>
+
+            <!-- Sağ Tərəf: Məlumatlar -->
+            <div class="w-full md:w-1/2 p-8 flex flex-col overflow-y-auto">
+                <h2 id="modal-title" class="text-3xl font-bold text-gray-900 mb-2">Məhsul Adı</h2>
+                <div class="text-3xl font-black text-mubagRed mb-6" id="modal-price">0 ₼</div>
+                
+                <div class="prose prose-sm text-gray-600 mb-8 flex-1">
+                    <h4 class="font-semibold text-gray-900 mb-2">Məhsul Haqqında:</h4>
+                    <p id="modal-description">Təsvir...</p>
+                    <p class="mt-4 text-sm bg-red-50 p-3 rounded-lg text-red-800 border border-red-100">
+                        ✨ <b>Qeyd:</b> Məhsulun fərqli bucaqlardan görünüşü üçün sol tərəfdəki kiçik şəkillərə toxunun.
+                    </p>
+                </div>
+
+                <div class="mt-auto pt-4 border-t">
+                    <button id="modal-add-btn" class="w-full bg-gray-900 text-white py-4 rounded-xl font-bold text-lg hover:bg-mubagRed transition transform hover:scale-[1.02] shadow-xl flex items-center justify-center gap-3">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                        Səbətə Əlavə Et
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT HİSSƏSİ - REDAKTƏ EDİLƏ BİLƏN YER -->
     <script>
-        // PDF.js Worker
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-        // Durum Değişkenleri
-        let pdfDoc = null;
-        let pageNum = 1;
-        let scale = 1.0;
-        let canvasContainer = document.getElementById('canvas-container');
-        let canvasWrapper = document.getElementById('canvas-wrapper');
-        let pdfCanvas = document.getElementById('pdf-render');
-        let drawCanvas = document.getElementById('draw-layer');
-        let pdfCtx = pdfCanvas.getContext('2d');
-        let drawCtx = drawCanvas.getContext('2d');
-        let textOverlay = document.getElementById('text-input-overlay');
+        /*************************************************************************
+         * * BURANI REDAKTƏ ET (8 Məhsul)
+         * Şəkilləri əlavə edərkən vergül qoymağı unutma!
+         * Format: resimler: ["link1", "link2", "link3"]
+         * *************************************************************************/
         
-        // Çizim Verileri (Vektörel Saklama - ÖNEMLİ: Zoom için)
-        // Yapı: { 1: [ {type: 'path', points: [...], color: 'red', ...}, {type: 'text', ...} ], 2: [...] }
-        let allAnnotations = {}; 
-        
-        let currentTool = 'cursor';
-        let isDrawing = false;
-        let currentPath = []; // Anlık çizilen noktalar
-        let drawingColor = '#000000';
-        let lineWidth = 3;
-        let isSmartMode = false;
-
-        // LocalStorage Keys
-        const LS_PDF_DATA = 'saved_pdf_data';
-        const LS_ANNOTATIONS = 'saved_annotations';
-        const LS_PAGE = 'saved_page_num';
-
-        // --- Başlangıç ---
-        window.addEventListener('DOMContentLoaded', () => {
-            loadFromStorage();
-        });
-
-        // --- Dosya İşlemleri ---
-        document.getElementById('file-input').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if(file) loadPDFFromFile(file);
-        });
-
-        // Drag & Drop
-        document.body.addEventListener('dragover', e => e.preventDefault());
-        document.body.addEventListener('drop', (e) => {
-            e.preventDefault();
-            if(e.dataTransfer.files[0]?.type === 'application/pdf') {
-                loadPDFFromFile(e.dataTransfer.files[0]);
+        const mehsullar = [
+            {
+                id: 1,
+                ad: "Narıncı çanta",
+                qiymet: 45,
+                tesvir: "Gündəlik istifadə üçün rahat, geniş və şık narıncı rəngli çanta. Həm iş, həm də gəzinti üçün idealdır.",
+                resimler: [ 
+                    "https://i.postimg.cc/KjG2m6vK/canta.jpg", // Əsas şəkil
+                    "https://placehold.co/600x600/FFA500/FFFFFF?text=Narıncı+Yan", // 2-ci şəkil (Misal üçün)
+                    "https://placehold.co/600x600/FFA500/FFFFFF?text=Narıncı+Ici"  // 3-cü şəkil
+                ]
+            },
+            {
+                id: 2,
+                ad: "Parıltlı çanta",
+                qiymet: 60,
+                tesvir: "Gecə ziyafətləri və xüsusi günlər üçün zərif daşlı dizayn.",
+                resimler: [
+                    "https://i.postimg.cc/prWHPwXn/Whats-App-Image-2025-11-29-at-16-09-48-2cb7b111.jpg",
+                    "https://placehold.co/600x600/CCCCCC/000000?text=Parıltı+Detalı"
+                ]
+            },
+            {
+                id: 3,
+                ad: "Toy üçün",
+                qiymet: 35,
+                tesvir: "Klassik və sadə görünüşü sevənlər üçün ideal seçim.",
+                resimler: [
+                    "https://i.postimg.cc/3N8T3sJ0/Whats-App-Image-2025-11-29-at-16-09-48-856f8c83.jpg",
+                    "https://placehold.co/600x600/F3F4F6/000000?text=Arxa+Görünüş"
+                ]
+            },
+            // Yeni əlavə olunan boş yerlər (Sən dolduracaqsan)
+            {
+                id: 4,
+                ad: "Məhsul 4 (Doldur)",
+                qiymet: 85,
+                tesvir: "Yeni modelimiz tezliklə burada olacaq.",
+                resimler: [
+                    "https://placehold.co/600x600/FFFFFF/DC2626?text=Məhsul+4",
+                    "https://placehold.co/600x600/F3F4F6/DC2626?text=Məhsul+4+Yan"
+                ]
+            },
+            {
+                id: 5,
+                ad: "Məhsul 5 (Doldur)",
+                qiymet: 55,
+                tesvir: "Yeni modelimiz tezliklə burada olacaq.",
+                resimler: [
+                    "https://placehold.co/600x600/FFFFFF/DC2626?text=Məhsul+5"
+                ]
+            },
+            {
+                id: 6,
+                ad: "Məhsul 6 (Doldur)",
+                qiymet: 70,
+                tesvir: "Yeni modelimiz tezliklə burada olacaq.",
+                resimler: [
+                    "https://placehold.co/600x600/FFFFFF/DC2626?text=Məhsul+6"
+                ]
+            },
+            {
+                id: 7,
+                ad: "Məhsul 7 (Doldur)",
+                qiymet: 90,
+                tesvir: "Yeni modelimiz tezliklə burada olacaq.",
+                resimler: [
+                    "https://placehold.co/600x600/FFFFFF/DC2626?text=Məhsul+7"
+                ]
+            },
+            {
+                id: 8,
+                ad: "Məhsul 8 (Doldur)",
+                qiymet: 120,
+                tesvir: "Yeni modelimiz tezliklə burada olacaq.",
+                resimler: [
+                    "https://placehold.co/600x600/FFFFFF/DC2626?text=Məhsul+8"
+                ]
             }
-        });
+        ];
 
-        function loadPDFFromFile(file) {
-            const reader = new FileReader();
-            document.getElementById('empty-state').classList.add('hidden');
-            document.getElementById('loading-indicator').classList.remove('hidden'); // Basit loader
+        /*************************************************************************
+         * DİQQƏT: BURADAN AŞAĞISINI DƏYİŞMƏYİN
+         *************************************************************************/
 
-            reader.onload = function(e) {
-                const result = e.target.result;
-                // LocalStorage'a kaydetmeyi dene (Büyük dosyalarda hata verebilir)
-                try {
-                    localStorage.setItem(LS_PDF_DATA, result);
-                    allAnnotations = {}; // Yeni dosya, çizimleri sıfırla
-                    localStorage.removeItem(LS_ANNOTATIONS);
-                } catch(err) {
-                    console.warn("PDF çok büyük, LocalStorage'a kaydedilemedi. Sadece çizimler tutulacak.");
-                    alert("PDF dosyası çok büyük olduğu için tarayıcı belleğine kaydedilemedi. Sayfayı yenilerseniz dosyayı tekrar seçmeniz gerekecek.");
-                }
-                
-                loadPDFData(result);
+        const productContainer = document.getElementById('product-container');
+
+        // Məhsulları Ekrana Yazdırma
+        function renderProducts() {
+            productContainer.innerHTML = mehsullar.map(mehsul => `
+                <div class="product-card bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100 flex flex-col h-full cursor-pointer group" onclick="openProductModal(${mehsul.id})">
+                    <div class="relative h-64 overflow-hidden bg-gray-100">
+                        <img src="${mehsul.resimler[0]}" alt="${mehsul.ad}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">
+                        <div class="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <span class="bg-white/90 text-gray-900 px-4 py-2 rounded-full font-bold shadow-lg transform translate-y-4 group-hover:translate-y-0 transition">Bax & Böyüt</span>
+                        </div>
+                    </div>
+                    <div class="p-5 flex-1 flex flex-col">
+                        <h3 class="text-lg font-bold text-gray-800 mb-1">${mehsul.ad}</h3>
+                        <p class="text-sm text-gray-500 mb-4 line-clamp-2">${mehsul.tesvir}</p>
+                        <div class="mt-auto flex justify-between items-center">
+                            <span class="text-xl font-black text-mubagRed">${mehsul.qiymet} ₼</span>
+                            <button onclick="event.stopPropagation(); addToCart(${mehsul.id})" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-mubagRed transition active:scale-95 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                Səbət
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- MODAL MƏNTİQİ (Yeni) ---
+        let currentModalProduct = null;
+
+        function openProductModal(productId) {
+            const product = mehsullar.find(p => p.id === productId);
+            if (!product) return;
+            currentModalProduct = product;
+
+            // Məlumatları doldur
+            document.getElementById('modal-title').innerText = product.ad;
+            document.getElementById('modal-price').innerText = product.qiymet + " ₼";
+            document.getElementById('modal-description').innerText = product.tesvir;
+            document.getElementById('modal-main-image').src = product.resimler[0];
+            
+            // "Səbətə Əlavə Et" düyməsinin funksiyasını yenilə
+            const addBtn = document.getElementById('modal-add-btn');
+            addBtn.onclick = function() {
+                addToCart(product.id);
+                closeProductModal();
             };
-            reader.readAsDataURL(file);
+
+            // Thumbnails (Balaca şəkillər) yarat
+            const thumbsContainer = document.getElementById('modal-thumbnails');
+            thumbsContainer.innerHTML = product.resimler.map((img, index) => `
+                <img src="${img}" 
+                     onclick="changeModalImage('${img}', this)" 
+                     class="w-16 h-16 object-cover rounded-lg border-2 cursor-pointer transition ${index === 0 ? 'thumb-active' : 'border-transparent hover:border-red-200'}" 
+                     alt="Görünüş ${index + 1}">
+            `).join('');
+
+            // Modalı aç
+            const modal = document.getElementById('product-modal');
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Arxa plan scrollunu dayandır
         }
 
-        async function loadFromStorage() {
-            const savedPdf = localStorage.getItem(LS_PDF_DATA);
-            const savedAnnots = localStorage.getItem(LS_ANNOTATIONS);
-            const savedPage = localStorage.getItem(LS_PAGE);
-
-            if (savedAnnots) {
-                allAnnotations = JSON.parse(savedAnnots);
-            }
-
-            if (savedPdf) {
-                document.getElementById('empty-state').style.display = 'none';
-                if(savedPage) pageNum = parseInt(savedPage);
-                await loadPDFData(savedPdf);
-            }
-        }
-
-        function clearStorage() {
-            if(confirm('Tüm kayıtlı veriler silinecek. Emin misiniz?')) {
-                localStorage.clear();
-                location.reload();
-            }
-        }
-
-        async function loadPDFData(base64Data) {
-            const pdfData = atob(base64Data.split(',')[1]);
-            const loadingTask = pdfjsLib.getDocument({data: pdfData});
+        function changeModalImage(imgUrl, thumbElement) {
+            document.getElementById('modal-main-image').src = imgUrl;
             
-            try {
-                pdfDoc = await loadingTask.promise;
-                document.getElementById('canvas-wrapper').style.display = 'block';
-                document.getElementById('empty-state').style.display = 'none';
-                renderPage(pageNum);
-            } catch (error) {
-                console.error(error);
-                alert("PDF yüklenirken hata oluştu.");
-            }
-        }
-
-        // --- Render İşlemleri ---
-        async function renderPage(num) {
-            if(!pdfDoc) return;
-            
-            const page = await pdfDoc.getPage(num);
-            const viewport = page.getViewport({scale: scale});
-
-            pdfCanvas.height = viewport.height;
-            pdfCanvas.width = viewport.width;
-            drawCanvas.height = viewport.height;
-            drawCanvas.width = viewport.width;
-            
-            canvasWrapper.style.width = `${viewport.width}px`;
-            canvasWrapper.style.height = `${viewport.height}px`;
-
-            await page.render({canvasContext: pdfCtx, viewport: viewport}).promise;
-
-            document.getElementById('page-num').innerText = `${num} / ${pdfDoc.numPages}`;
-            document.getElementById('zoom-level').innerText = `${Math.round(scale * 100)}%`;
-
-            // Çizimleri yeniden çiz (Zoom'a uygun olarak)
-            redrawAnnotations();
-            
-            // Kaydet
-            localStorage.setItem(LS_PAGE, num);
-        }
-
-        function changeZoom(delta) {
-            const newScale = scale + delta;
-            if (newScale >= 0.5 && newScale <= 3.0) {
-                scale = newScale;
-                renderPage(pageNum);
-            }
-        }
-
-        function changePage(delta) {
-            if(!pdfDoc) return;
-            const newPage = pageNum + delta;
-            if(newPage >= 1 && newPage <= pdfDoc.numPages) {
-                pageNum = newPage;
-                renderPage(pageNum);
-            }
-        }
-
-        // --- Çizim ve Akıllı Düzeltme Mantığı ---
-
-        function getNormalizedPos(e) {
-            // Mouse pozisyonunu 0.0 - 1.0 arasına normalize et (Zoom bağımsızlığı için)
-            const rect = drawCanvas.getBoundingClientRect();
-            let clientX = e.clientX;
-            let clientY = e.clientY;
-            
-            if(e.touches && e.touches.length > 0) {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
-            }
-
-            return {
-                x: (clientX - rect.left) / (rect.width),
-                y: (clientY - rect.top) / (rect.height)
-            };
-        }
-
-        drawCanvas.addEventListener('mousedown', startDrawing);
-        drawCanvas.addEventListener('touchstart', startDrawing, {passive: false});
-        
-        drawCanvas.addEventListener('mousemove', draw);
-        drawCanvas.addEventListener('touchmove', draw, {passive: false});
-        
-        drawCanvas.addEventListener('mouseup', stopDrawing);
-        drawCanvas.addEventListener('touchend', stopDrawing);
-
-        function startDrawing(e) {
-            if (currentTool === 'cursor') return;
-            if (currentTool === 'text') { handleTextClick(e); return; }
-
-            isDrawing = true;
-            currentPath = []; 
-            const pos = getNormalizedPos(e);
-            currentPath.push(pos);
-            
-            drawCtx.beginPath();
-            drawCtx.moveTo(pos.x * drawCanvas.width, pos.y * drawCanvas.height);
-            drawCtx.lineCap = 'round';
-            drawCtx.lineJoin = 'round';
-            drawCtx.lineWidth = lineWidth;
-            drawCtx.strokeStyle = drawingColor;
-        }
-
-        function draw(e) {
-            if (!isDrawing) return;
-            e.preventDefault();
-            
-            const pos = getNormalizedPos(e);
-            currentPath.push(pos);
-
-            // Anlık çizim (Görsel geri bildirim)
-            drawCtx.lineTo(pos.x * drawCanvas.width, pos.y * drawCanvas.height);
-            drawCtx.stroke();
-            
-            if (currentTool === 'eraser') {
-                // Silgi efekti için geçici çizim (Kırmızı kutu vs yerine direkt siliyormuş gibi)
-                // Ama asıl silme işlemi mouseup'ta data üzerinden yapılacak
-            }
-        }
-
-        function stopDrawing() {
-            if (!isDrawing) return;
-            isDrawing = false;
-            drawCtx.closePath();
-
-            if (currentTool === 'pen') {
-                let finalPath = currentPath;
-                let type = 'path';
-
-                // --- AKILLI DÜZELTME (MAGIC MODE) ---
-                if (isSmartMode) {
-                    const shape = detectShape(currentPath);
-                    if (shape) {
-                        type = shape.type;
-                        finalPath = shape.data; // Daire için {x,y,r}, Kare için {x,y,w,h}
-                    } else {
-                        // Şekil bulunamadıysa yumuşatma uygula
-                        finalPath = simplifyPath(currentPath, 0.001); // 0.001 tolerans
-                    }
-                }
-
-                addAnnotation({
-                    tool: 'pen',
-                    type: type,
-                    points: finalPath,
-                    color: drawingColor,
-                    width: lineWidth
-                });
-            } else if (currentTool === 'eraser') {
-                // Silgi: Çizilen yolun kestiği tüm objeleri sil
-                eraseObjectsIntersecting(currentPath);
-            }
-
-            redrawAnnotations();
-            saveAnnotations();
-        }
-
-        // --- Veri Yönetimi ---
-        function addAnnotation(annot) {
-            if (!allAnnotations[pageNum]) allAnnotations[pageNum] = [];
-            allAnnotations[pageNum].push(annot);
-        }
-
-        function saveAnnotations() {
-            localStorage.setItem(LS_ANNOTATIONS, JSON.stringify(allAnnotations));
-        }
-
-        function undo() {
-            if (allAnnotations[pageNum] && allAnnotations[pageNum].length > 0) {
-                allAnnotations[pageNum].pop();
-                redrawAnnotations();
-                saveAnnotations();
-            }
-        }
-
-        // --- Çizim Motoru (Redraw) ---
-        function redrawAnnotations() {
-            // Canvası temizle
-            drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
-            
-            const pageAnnots = allAnnotations[pageNum] || [];
-            const w = drawCanvas.width;
-            const h = drawCanvas.height;
-
-            pageAnnots.forEach(annot => {
-                drawCtx.strokeStyle = annot.color;
-                drawCtx.fillStyle = annot.color;
-                drawCtx.lineWidth = annot.width;
-                drawCtx.lineCap = 'round';
-                drawCtx.lineJoin = 'round';
-                drawCtx.beginPath();
-
-                if (annot.type === 'path') {
-                    // Normal Çizim
-                    if(annot.points.length === 0) return;
-                    drawCtx.moveTo(annot.points[0].x * w, annot.points[0].y * h);
-                    for (let i = 1; i < annot.points.length; i++) {
-                        drawCtx.lineTo(annot.points[i].x * w, annot.points[i].y * h);
-                    }
-                    drawCtx.stroke();
-                } 
-                else if (annot.type === 'circle') {
-                    // Akıllı Daire
-                    const { cx, cy, r } = annot.points;
-                    drawCtx.arc(cx * w, cy * h, r * w, 0, Math.PI * 2); // r X eksenine göre scale edilir
-                    drawCtx.stroke();
-                }
-                else if (annot.type === 'rect') {
-                    // Akıllı Dikdörtgen
-                    const { x, y, rw, rh } = annot.points;
-                    drawCtx.strokeRect(x * w, y * h, rw * w, rh * h);
-                }
-                else if (annot.type === 'text') {
-                    // Metin
-                    drawCtx.font = `${annot.fontSize * scale}px sans-serif`; // Font scale ile büyümeli
-                    drawCtx.textBaseline = 'top';
-                    drawCtx.fillText(annot.text, annot.x * w, annot.y * h);
-                }
+            // Aktiv çərçivəni dəyiş
+            const allThumbs = document.querySelectorAll('#modal-thumbnails img');
+            allThumbs.forEach(t => {
+                t.classList.remove('thumb-active');
+                t.classList.add('border-transparent');
             });
+            thumbElement.classList.remove('border-transparent');
+            thumbElement.classList.add('thumb-active');
         }
 
-        // --- Akıllı Algoritmalar ---
+        function closeProductModal() {
+            const modal = document.getElementById('product-modal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto'; // Scrollu bərpa et
+        }
 
-        // 1. Yol Yumuşatma (Douglas-Peucker Basitleştirmesi benzeri)
-        // El yazısını "daha güzel" ve pürüzsüz gösterir.
-        function simplifyPath(points, tolerance) {
-            if (points.length <= 2) return points;
-            // Basit bir yöntem: Her 3. noktayı al veya mesafeye bak (Burada basitleştirilmiş örnek)
-            // Daha gelişmişi için Ramer-Douglas-Peucker algoritması gerekir ama 
-            // performansı korumak için basit bir "mesafe filtresi" uygulayalım.
-            const newPoints = [points[0]];
-            let lastPoint = points[0];
 
-            for(let i=1; i<points.length; i++) {
-                const p = points[i];
-                const dist = Math.hypot(p.x - lastPoint.x, p.y - lastPoint.y);
-                if(dist > 0.005) { // Eşik değeri
-                    newPoints.push(p);
-                    lastPoint = p;
-                }
+        // --- SƏBƏT MƏNTİQİ (Köhnə kod) ---
+        let cart = JSON.parse(localStorage.getItem('mubagCart')) || [];
+
+        function updateCartUI() {
+            const cartItemsContainer = document.getElementById('cart-items');
+            const cartCountElement = document.getElementById('cart-count');
+            const cartTotalElement = document.getElementById('cart-total');
+
+            const totalCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+            cartCountElement.innerText = totalCount;
+            if (totalCount > 0) {
+                cartCountElement.classList.remove('opacity-0');
+            } else {
+                cartCountElement.classList.add('opacity-0');
             }
-            newPoints.push(points[points.length-1]);
-            return newPoints;
-        }
 
-        // 2. Şekil Algılama (Daire ve Dikdörtgen)
-        function detectShape(points) {
-            if (points.length < 10) return null; // Çok kısa çizgi şekil olamaz
-
-            const start = points[0];
-            const end = points[points.length - 1];
-            
-            // Bounding Box Hesapla
-            let minX = 1, maxX = 0, minY = 1, maxY = 0;
-            points.forEach(p => {
-                if(p.x < minX) minX = p.x;
-                if(p.x > maxX) maxX = p.x;
-                if(p.y < minY) minY = p.y;
-                if(p.y > maxY) maxY = p.y;
-            });
-            const width = maxX - minX;
-            const height = maxY - minY;
-
-            // Uç noktalar birbirine yakın mı? (Kapalı şekil kontrolü)
-            const closureDist = Math.hypot(start.x - end.x, start.y - end.y);
-            const isClosed = closureDist < 0.1; // %10'dan az açıklık varsa kapalı say
-
-            if (isClosed) {
-                // Daire Kontrolü
-                // Merkezden tüm noktalara olan mesafenin varyansına bakılır.
-                const cx = minX + width/2;
-                const cy = minY + height/2;
-                const r = width / 2; // Basit yarıçap
-                
-                // Basit heuristik: En boy oranı kareye yakınsa dairedir (veya karedir)
-                const aspectRatio = width / height;
-                
-                if (aspectRatio > 0.8 && aspectRatio < 1.2) {
-                    return {
-                        type: 'circle',
-                        data: { cx, cy, r }
-                    };
-                }
-                
-                // Değilse Dikdörtgen varsay
-                return {
-                    type: 'rect',
-                    data: { x: minX, y: minY, rw: width, rh: height }
-                };
+            if (cart.length === 0) {
+                cartItemsContainer.innerHTML = '<div class="flex flex-col items-center justify-center h-40 text-gray-400"><svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg><p>Səbətiniz boşdur</p></div>';
+            } else {
+                cartItemsContainer.innerHTML = cart.map(item => `
+                    <div class="flex items-center gap-4 bg-gray-50 p-3 rounded-xl">
+                        <img src="${item.resimler[0]}" class="w-16 h-16 rounded-lg object-cover border" alt="${item.ad}">
+                        <div class="flex-1">
+                            <h4 class="text-sm font-bold text-gray-800 line-clamp-1">${item.ad}</h4>
+                            <p class="text-xs text-gray-500">${item.qiymet} ₼ x ${item.quantity}</p>
+                        </div>
+                        <div class="flex flex-col items-end gap-1">
+                            <span class="font-bold text-mubagRed">${item.qiymet * item.quantity} ₼</span>
+                            <button onclick="removeFromCart(${item.id})" class="text-xs text-red-500 underline hover:text-red-700">Sil</button>
+                        </div>
+                    </div>
+                `).join('');
             }
-            
-            // Çizgi düzeltme (Eğer başlangıç ve bitiş uzak ama noktalar doğrusalsa)
-            // Bu örnekte sadece kapalı şekillere odaklandım.
-            return null;
+
+            const total = cart.reduce((acc, item) => acc + (item.qiymet * item.quantity), 0);
+            cartTotalElement.innerText = total + " ₼";
+            localStorage.setItem('mubagCart', JSON.stringify(cart));
         }
 
-        // --- Silgi Mantığı (Intersection) ---
-        function eraseObjectsIntersecting(erasePath) {
-            // Silgi yolunun "Bounding Box"ını al ve bu alana giren çizimleri sil
-            if (!allAnnotations[pageNum]) return;
-            
-            // Basit Silme: Silginin son noktasına yakın olanları sil
-            const eraserPos = erasePath[erasePath.length-1];
-            const threshold = 0.05; // Silgi büyüklüğü (Normalize edilmiş)
+        function addToCart(productId) {
+            const product = mehsullar.find(p => p.id === productId);
+            const existingItem = cart.find(item => item.id === productId);
 
-            allAnnotations[pageNum] = allAnnotations[pageNum].filter(annot => {
-                if (annot.type === 'path') {
-                    // Çizginin herhangi bir noktası silgiye yakın mı?
-                    return !annot.points.some(p => Math.hypot(p.x - eraserPos.x, p.y - eraserPos.y) < threshold);
-                }
-                else if (annot.type === 'circle') {
-                    const {cx, cy} = annot.points;
-                    return Math.hypot(cx - eraserPos.x, cy - eraserPos.y) > (annot.points.r + threshold);
-                }
-                // Dikdörtgen ve text için benzer kontroller eklenebilir
-                return true; 
-            });
-        }
-
-        // --- Metin Aracı ---
-        function handleTextClick(e) {
-            if (textOverlay.style.display === 'block') {
-                finalizeText();
-                return;
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ ...product, quantity: 1 });
             }
-            const pos = getNormalizedPos(e);
+
+            updateCartUI();
             
-            textOverlay.style.left = (pos.x * drawCanvas.width) + 'px';
-            textOverlay.style.top = (pos.y * drawCanvas.height) + 'px';
-            textOverlay.style.display = 'block';
-            textOverlay.style.color = drawingColor;
-            textOverlay.style.fontSize = '16px';
-            textOverlay.innerText = '';
-            textOverlay.focus();
-            
-            // Konumu sakla
-            textOverlay.dataset.nx = pos.x;
-            textOverlay.dataset.ny = pos.y;
+            const sidebar = document.getElementById('cart-sidebar');
+            const overlay = document.getElementById('cart-overlay');
+            sidebar.classList.remove('translate-x-full');
+            overlay.classList.remove('hidden');
         }
 
-        function finalizeText() {
-            if (textOverlay.style.display === 'none' || textOverlay.innerText.trim() === '') {
-                textOverlay.style.display = 'none';
-                return;
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            updateCartUI();
+        }
+
+        function toggleCart() {
+            const sidebar = document.getElementById('cart-sidebar');
+            const overlay = document.getElementById('cart-overlay');
+            
+            if (sidebar.classList.contains('translate-x-full')) {
+                sidebar.classList.remove('translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('translate-x-full');
+                overlay.classList.add('hidden');
             }
-            
-            addAnnotation({
-                tool: 'text',
-                type: 'text',
-                text: textOverlay.innerText,
-                x: parseFloat(textOverlay.dataset.nx),
-                y: parseFloat(textOverlay.dataset.ny),
-                color: drawingColor,
-                fontSize: 16 // Varsayılan boyut
-            });
-
-            textOverlay.innerText = '';
-            textOverlay.style.display = 'none';
-            redrawAnnotations();
-            saveAnnotations();
         }
 
-        // --- Helper Functions ---
-        function setTool(tool) {
-            currentTool = tool;
-            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-            const btn = document.getElementById(`btn-${tool}`);
-            if(btn) btn.classList.add('active');
-            
-            if(tool === 'pen') drawCanvas.style.cursor = 'crosshair';
-            else if(tool === 'text') drawCanvas.style.cursor = 'text';
-            else drawCanvas.style.cursor = 'default';
+        function toggleMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
         }
 
-        function toggleSmartMode() {
-            isSmartMode = !isSmartMode;
-            const btn = document.getElementById('btn-magic');
-            if(isSmartMode) btn.classList.add('magic-active');
-            else btn.classList.remove('magic-active');
-        }
-
-        document.getElementById('color-picker').addEventListener('change', (e) => drawingColor = e.target.value);
-        
-        function downloadPDF() {
-            // Şimdilik sadece görünen sayfayı resim olarak indirir
-            // Tam PDF indirme için pdf-lib gibi kütüphaneler gerekir (single-file için ağır olur)
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = pdfCanvas.width;
-            tempCanvas.height = pdfCanvas.height;
-            const ctx = tempCanvas.getContext('2d');
-            ctx.drawImage(pdfCanvas, 0, 0);
-            ctx.drawImage(drawCanvas, 0, 0);
-            
-            const link = document.createElement('a');
-            link.download = 'notlu-sayfa.png';
-            link.href = tempCanvas.toDataURL();
-            link.click();
-        }
+        renderProducts();
+        updateCartUI();
 
     </script>
 </body>
