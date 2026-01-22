@@ -13,14 +13,22 @@
 
     <script>
         tailwind.config = {
+            darkMode: 'class', // Class tabanlı dark mode
             theme: {
                 extend: {
                     colors: {
                         brand: {
-                            accent: '#00bcd4', // Beyaz üstünde daha iyi okunan Koyu Turkuaz/Cyan
-                            dark: '#0f172a',   // Yazılar için Koyu Renk
-                            gray: '#f8fafc',   // Çok açık gri (Arka planlar için)
-                            lightGray: '#e2e8f0' // Çizgiler için gri
+                            accent: '#00bcd4', 
+                            // Light Mode Renkleri
+                            lightBg: '#ffffff',
+                            lightText: '#1e293b',
+                            lightCard: '#ffffff',
+                            
+                            // Dark Mode Renkleri (Koyu Mavi Tema)
+                            darkBg: '#0f172a',    /* Slate 900 - Koyu Mavi Arka Plan */
+                            darkSurface: '#1e293b', /* Slate 800 - Koyu Mavi Kartlar */
+                            darkText: '#f1f5f9',    /* Slate 100 - Açık Yazı */
+                            darkBorder: '#334155'   /* Slate 700 - Çizgiler */
                         }
                     },
                     fontFamily: {
@@ -33,26 +41,42 @@
     </script>
 
     <style>
-        /* Temel Ayarlar */
+        /* Temel Geçişler */
+        body {
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+        
+        /* Light Mode Varsayılan */
         body {
             background-color: #ffffff;
             color: #1e293b;
-            overflow-x: hidden;
-            cursor: default;
         }
 
-        /* Mouse Takip Eden Işık Efekti - Beyaz Mod İçin */
+        /* Dark Mode Sınıfı Eklendiğinde */
+        body.dark {
+            background-color: #0f172a; /* Koyu Mavi */
+            color: #f1f5f9;
+        }
+
+        /* Mouse Takip Eden Işık Efekti */
         #cursor-glow {
             position: fixed;
             top: 0;
             left: 0;
             width: 500px;
             height: 500px;
+            /* Light mode için varsayılan glow */
             background: radial-gradient(circle, rgba(0, 188, 212, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
             transform: translate(-50%, -50%);
             pointer-events: none;
             z-index: 9999;
             transition: opacity 0.3s ease;
+        }
+
+        /* Dark Mode Glow */
+        body.dark #cursor-glow {
+            background: radial-gradient(circle, rgba(0, 188, 212, 0.15) 0%, rgba(15, 23, 42, 0) 70%);
+            mix-blend-mode: screen;
         }
 
         /* Özel Scrollbar */
@@ -61,6 +85,9 @@
         }
         ::-webkit-scrollbar-track {
             background: #f1f5f9;
+        }
+        body.dark ::-webkit-scrollbar-track {
+            background: #020617;
         }
         ::-webkit-scrollbar-thumb {
             background: #00bcd4;
@@ -87,7 +114,6 @@
             border-right: 4px solid #00bcd4;
             animation: typing 4s ease-in-out infinite alternate;
             width: 0; 
-            color: #0f172a; /* Koyu renk yazı */
         }
 
         @keyframes typing {
@@ -97,29 +123,58 @@
             100% { width: 0; } 
         }
 
-        /* Resim Kartı Efekti - Beyaz Mod */
+        /* Resim Kartı */
         .photo-card {
             position: relative;
             overflow: hidden;
             border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); /* Yumuşak gölge */
+            transition: all 0.5s ease;
+        }
+        
+        /* Light/Dark Kart Gölgeleri */
+        body:not(.dark) .photo-card {
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(0, 0, 0, 0.05);
+            background: white;
+        }
+        body.dark .photo-card {
+            box-shadow: 0 20px 50px rgba(0, 188, 212, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #1e293b;
         }
 
-        /* Proje Kartı Stili - Beyaz Mod */
+        /* Proje Kartı */
         .project-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
             transition: all 0.4s ease;
             position: relative;
             overflow: hidden;
+        }
+        
+        /* Light Mode Kart */
+        body:not(.dark) .project-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+            color: #1e293b;
+        }
+        
+        /* Dark Mode Kart */
+        body.dark .project-card {
+            background: #1e293b;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #f1f5f9;
         }
         
         .project-card:hover {
             transform: translateY(-10px);
             border-color: #00bcd4;
+        }
+        
+        body:not(.dark) .project-card:hover {
             box-shadow: 0 20px 40px rgba(0, 188, 212, 0.15);
+        }
+        body.dark .project-card:hover {
+            box-shadow: 0 20px 40px rgba(0, 188, 212, 0.2);
         }
 
         /* Buton Stili */
@@ -150,6 +205,28 @@
             box-shadow: 0 10px 20px rgba(0, 188, 212, 0.3);
             transform: translateY(-2px);
         }
+
+        /* Theme Toggle Button */
+        .theme-toggle {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        .theme-toggle:hover {
+            background-color: rgba(0, 188, 212, 0.1);
+            color: #00bcd4;
+        }
+
+        /* Form Elemanları Dark Mode */
+        body.dark input, body.dark textarea, body.dark select {
+            background-color: #1e293b; /* Dark Surface */
+            border-color: #334155;
+            color: white;
+        }
+        body.dark input:focus, body.dark textarea:focus, body.dark select:focus {
+            border-color: #00bcd4;
+        }
     </style>
 </head>
 <body class="font-body antialiased selection:bg-brand-accent selection:text-white">
@@ -158,43 +235,63 @@
     <div id="cursor-glow"></div>
 
     <!-- Navigasyon -->
-    <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
+    <nav class="fixed w-full z-50 transition-colors duration-500 backdrop-blur-md border-b shadow-sm nav-container">
+        <!-- JS ile border ve bg renklerini ayarlayacağız -->
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="#" class="text-2xl font-head font-bold text-black tracking-wider hover:text-brand-accent transition-colors">VORLIXX</a>
-            <div class="hidden md:flex space-x-8 text-lg font-medium text-gray-600">
-                <a href="#home" class="hover:text-brand-accent transition-colors">Ana Sayfa</a>
-                <a href="#about" class="hover:text-brand-accent transition-colors">Hakkımda</a>
-                <a href="#projects" class="hover:text-brand-accent transition-colors">Projeler</a>
-                <a href="#contact" class="hover:text-brand-accent transition-colors">İletişim</a>
+            <a href="#" class="text-2xl font-head font-bold tracking-wider hover:text-brand-accent transition-colors brand-logo">VORLIXX</a>
+            
+            <div class="flex items-center gap-8">
+                <div class="hidden md:flex space-x-8 text-lg font-medium nav-links">
+                    <a href="#home" class="hover:text-brand-accent transition-colors">Ana Sayfa</a>
+                    <a href="#about" class="hover:text-brand-accent transition-colors">Hakkımda</a>
+                    <a href="#projects" class="hover:text-brand-accent transition-colors">Projeler</a>
+                    <a href="#contact" class="hover:text-brand-accent transition-colors">İletişim</a>
+                </div>
+
+                <!-- Dark/Light Mode Toggle Butonu -->
+                <button id="themeToggle" class="theme-toggle text-xl" title="Temayı Değiştir">
+                    <i class="fas fa-moon"></i>
+                </button>
+
+                <button class="md:hidden text-2xl mobile-menu-btn"><i class="fas fa-bars"></i></button>
             </div>
-            <button class="md:hidden text-2xl text-black"><i class="fas fa-bars"></i></button>
         </div>
     </nav>
 
     <!-- Hero Bölümü (Giriş) -->
-    <section id="home" class="min-h-screen flex items-center justify-center relative bg-white">
-        <!-- İnce ızgara (Grid) efekti - Koyu Gri -->
-        <div class="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+    <section id="home" class="min-h-screen flex items-center justify-center relative transition-colors duration-500">
+        <!-- Grid Efekti -->
+        <div class="absolute inset-0 bg-[size:50px_50px] opacity-20 grid-pattern"></div>
+        <style>
+            body:not(.dark) .grid-pattern {
+                background-image: linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
+            }
+            body.dark .grid-pattern {
+                background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+            }
+        </style>
 
         <div class="container mx-auto px-6 relative z-10 text-center">
             <h2 class="text-xl md:text-2xl text-brand-accent mb-6 tracking-[0.3em] font-bold reveal-element">PORTFOLYO</h2>
             
             <!-- Typewriter Efekti -->
             <div class="flex justify-center mb-8 reveal-element min-h-[80px]" style="transition-delay: 200ms;">
-                <h1 class="fluid-typewriter text-4xl md:text-7xl font-head font-black pb-2 px-4 text-black">
+                <h1 class="fluid-typewriter text-4xl md:text-7xl font-head font-black pb-2 px-4 hero-text">
                     MERHABA BEN VORLIXX
                 </h1>
             </div>
 
-            <p class="text-xl md:text-2xl text-gray-500 max-w-2xl mx-auto mb-12 font-bold tracking-wide reveal-element" style="transition-delay: 400ms;">
+            <p class="text-xl md:text-2xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto mb-12 font-bold tracking-wide reveal-element" style="transition-delay: 400ms;">
                 Grafik Tasarım & <span class="text-brand-accent">Web Development</span>
             </p>
             
             <div class="flex flex-col md:flex-row gap-4 justify-center reveal-element" style="transition-delay: 600ms;">
-                <a href="#contact" class="px-10 py-4 bg-brand-accent text-white font-bold text-lg rounded hover:bg-black transition-all duration-300 btn-glow shadow-lg shadow-cyan-500/30">
+                <a href="#contact" class="px-10 py-4 bg-brand-accent text-white font-bold text-lg rounded hover:bg-black dark:hover:bg-white dark:hover:text-black transition-all duration-300 btn-glow shadow-lg shadow-cyan-500/30">
                     İletişime Geç
                 </a>
-                <a href="#projects" class="px-10 py-4 bg-transparent border-2 border-gray-200 text-black font-bold text-lg rounded hover:border-brand-accent hover:text-brand-accent transition-all duration-300">
+                <a href="#projects" class="px-10 py-4 bg-transparent border-2 border-gray-200 dark:border-gray-700 text-current font-bold text-lg rounded hover:border-brand-accent hover:text-brand-accent transition-all duration-300">
                     Projelerim
                 </a>
             </div>
@@ -202,60 +299,60 @@
     </section>
 
     <!-- Hakkımda Bölümü -->
-    <section id="about" class="py-24 bg-brand-gray relative">
+    <section id="about" class="py-24 transition-colors duration-500 bg-brand-gray dark:bg-[#0b1120] relative">
         <div class="container mx-auto px-6">
             <div class="flex flex-col md:flex-row items-center gap-16">
                 
                 <!-- Sol Taraf: Fotoğraf -->
                 <div class="w-full md:w-1/2 reveal-element">
-                    <div class="photo-card group bg-white p-2">
+                    <div class="photo-card group p-2">
                         <img src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=2070&auto=format&fit=crop" 
                              alt="Çalışma Alanı" 
                              class="w-full h-[500px] object-cover rounded-xl filter grayscale group-hover:grayscale-0 transition-all duration-700">
                         
-                        <div class="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-sm p-6 rounded-lg shadow-lg z-10">
-                            <h3 class="text-xl font-head font-bold text-black">Yaratıcı Vizyon</h3>
-                            <p class="text-gray-600 text-sm mt-1">Minimalist tasarım, maksimum etki.</p>
+                        <div class="absolute bottom-4 left-4 right-4 bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-sm p-6 rounded-lg shadow-lg z-10 transition-colors duration-500">
+                            <h3 class="text-xl font-head font-bold text-black dark:text-white">Yaratıcı Vizyon</h3>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Minimalist tasarım, maksimum etki.</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Sağ Taraf: Yazılar -->
                 <div class="w-full md:w-1/2 reveal-element" style="transition-delay: 200ms;">
-                    <h2 class="text-4xl md:text-5xl font-head font-bold mb-8 text-black">Dijital <span class="text-brand-accent">Çözümler</span></h2>
-                    <p class="text-gray-600 mb-8 leading-relaxed text-lg">
+                    <h2 class="text-4xl md:text-5xl font-head font-bold mb-8 text-black dark:text-white">Dijital <span class="text-brand-accent">Çözümler</span></h2>
+                    <p class="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed text-lg">
                         Markanızın dijital dünyadaki yüzünü tasarlıyorum. Hem göze hitap eden grafikler hem de kusursuz çalışan kod yapıları ile projelerinizi hayata geçiriyorum.
                     </p>
 
                     <!-- Yetenek Listesi -->
                     <div class="space-y-6">
-                        <div class="flex items-center gap-4 p-5 border border-gray-200 bg-white rounded-xl hover:border-brand-accent hover:shadow-lg hover:shadow-cyan-100 transition-all duration-300 group">
-                            <div class="w-12 h-12 rounded-full bg-cyan-50 flex items-center justify-center text-brand-accent group-hover:bg-brand-accent group-hover:text-white transition-colors">
+                        <div class="flex items-center gap-4 p-5 border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1e293b] rounded-xl hover:border-brand-accent hover:shadow-lg transition-all duration-300 group">
+                            <div class="w-12 h-12 rounded-full bg-cyan-50 dark:bg-cyan-900/30 flex items-center justify-center text-brand-accent group-hover:bg-brand-accent group-hover:text-white transition-colors">
                                 <i class="fas fa-palette text-xl"></i>
                             </div>
                             <div>
-                                <h4 class="text-xl font-bold text-black">Grafik Tasarım</h4>
-                                <p class="text-gray-500 text-sm">Adobe Photoshop, Illustrator, UI/UX</p>
+                                <h4 class="text-xl font-bold text-black dark:text-white">Grafik Tasarım</h4>
+                                <p class="text-gray-500 dark:text-gray-400 text-sm">Adobe Photoshop, Illustrator, UI/UX</p>
                             </div>
                         </div>
                         
-                        <div class="flex items-center gap-4 p-5 border border-gray-200 bg-white rounded-xl hover:border-brand-accent hover:shadow-lg hover:shadow-cyan-100 transition-all duration-300 group">
-                            <div class="w-12 h-12 rounded-full bg-cyan-50 flex items-center justify-center text-brand-accent group-hover:bg-brand-accent group-hover:text-white transition-colors">
+                        <div class="flex items-center gap-4 p-5 border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1e293b] rounded-xl hover:border-brand-accent hover:shadow-lg transition-all duration-300 group">
+                            <div class="w-12 h-12 rounded-full bg-cyan-50 dark:bg-cyan-900/30 flex items-center justify-center text-brand-accent group-hover:bg-brand-accent group-hover:text-white transition-colors">
                                 <i class="fas fa-code text-xl"></i>
                             </div>
                             <div>
-                                <h4 class="text-xl font-bold text-black">Web Development</h4>
-                                <p class="text-gray-500 text-sm">HTML5, CSS3, JavaScript, React</p>
+                                <h4 class="text-xl font-bold text-black dark:text-white">Web Development</h4>
+                                <p class="text-gray-500 dark:text-gray-400 text-sm">HTML5, CSS3, JavaScript, React</p>
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-4 p-5 border border-gray-200 bg-white rounded-xl hover:border-brand-accent hover:shadow-lg hover:shadow-cyan-100 transition-all duration-300 group">
-                            <div class="w-12 h-12 rounded-full bg-cyan-50 flex items-center justify-center text-brand-accent group-hover:bg-brand-accent group-hover:text-white transition-colors">
+                        <div class="flex items-center gap-4 p-5 border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1e293b] rounded-xl hover:border-brand-accent hover:shadow-lg transition-all duration-300 group">
+                            <div class="w-12 h-12 rounded-full bg-cyan-50 dark:bg-cyan-900/30 flex items-center justify-center text-brand-accent group-hover:bg-brand-accent group-hover:text-white transition-colors">
                                 <i class="fas fa-film text-xl"></i>
                             </div>
                             <div>
-                                <h4 class="text-xl font-bold text-black">Video Edit & VFX</h4>
-                                <p class="text-gray-500 text-sm">Premiere Pro, After Effects</p>
+                                <h4 class="text-xl font-bold text-black dark:text-white">Video Edit & VFX</h4>
+                                <p class="text-gray-500 dark:text-gray-400 text-sm">Premiere Pro, After Effects</p>
                             </div>
                         </div>
                     </div>
@@ -265,11 +362,11 @@
     </section>
 
     <!-- PROJELER BÖLÜMÜ -->
-    <section id="projects" class="py-24 bg-white relative border-t border-gray-100">
+    <section id="projects" class="py-24 bg-white dark:bg-[#0f172a] relative border-t border-gray-100 dark:border-gray-800 transition-colors duration-500">
         <div class="container mx-auto px-6">
             <div class="text-center mb-16 reveal-element">
-                <h2 class="text-3xl md:text-5xl font-head font-bold mb-4 text-black">SEÇİLMİŞ <span class="text-brand-accent">PROJELER</span></h2>
-                <p class="text-gray-500">Son zamanlarda üzerinde çalıştığım bazı işler.</p>
+                <h2 class="text-3xl md:text-5xl font-head font-bold mb-4 text-black dark:text-white">SEÇİLMİŞ <span class="text-brand-accent">PROJELER</span></h2>
+                <p class="text-gray-500 dark:text-gray-400">Son zamanlarda üzerinde çalıştığım bazı işler.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -281,11 +378,11 @@
                     </div>
                     <div class="p-8">
                         <div class="flex justify-between items-center mb-4">
-                            <span class="text-brand-accent text-xs font-bold tracking-widest border border-brand-accent px-2 py-1 rounded bg-cyan-50">WEB DESIGN</span>
+                            <span class="text-brand-accent text-xs font-bold tracking-widest border border-brand-accent px-2 py-1 rounded bg-cyan-50 dark:bg-cyan-900/20">WEB DESIGN</span>
                         </div>
-                        <h3 class="text-2xl font-head font-bold text-black mb-3">E-Ticaret Platformu</h3>
-                        <p class="text-gray-600 mb-6 text-sm leading-relaxed">Modern giyim markası için geliştirilmiş, yüksek performanslı ve tam responsive e-ticaret arayüzü tasarımı.</p>
-                        <a href="#" class="inline-flex items-center text-black font-bold hover:text-brand-accent transition-colors">
+                        <h3 class="text-2xl font-head font-bold mb-3">E-Ticaret Platformu</h3>
+                        <p class="text-sm leading-relaxed mb-6 opacity-80">Modern giyim markası için geliştirilmiş, yüksek performanslı ve tam responsive e-ticaret arayüzü tasarımı.</p>
+                        <a href="#" class="inline-flex items-center font-bold hover:text-brand-accent transition-colors">
                             İncele <i class="fas fa-arrow-right ml-2"></i>
                         </a>
                     </div>
@@ -299,11 +396,11 @@
                     </div>
                     <div class="p-8">
                         <div class="flex justify-between items-center mb-4">
-                            <span class="text-brand-accent text-xs font-bold tracking-widest border border-brand-accent px-2 py-1 rounded bg-cyan-50">BRANDING</span>
+                            <span class="text-brand-accent text-xs font-bold tracking-widest border border-brand-accent px-2 py-1 rounded bg-cyan-50 dark:bg-cyan-900/20">BRANDING</span>
                         </div>
-                        <h3 class="text-2xl font-head font-bold text-black mb-3">Neon Cyber Kimlik</h3>
-                        <p class="text-gray-600 mb-6 text-sm leading-relaxed">Bir teknoloji girişimi için oluşturulan fütüristik kurumsal kimlik, logo ve sosyal medya kitleri.</p>
-                        <a href="#" class="inline-flex items-center text-black font-bold hover:text-brand-accent transition-colors">
+                        <h3 class="text-2xl font-head font-bold mb-3">Neon Cyber Kimlik</h3>
+                        <p class="text-sm leading-relaxed mb-6 opacity-80">Bir teknoloji girişimi için oluşturulan fütüristik kurumsal kimlik, logo ve sosyal medya kitleri.</p>
+                        <a href="#" class="inline-flex items-center font-bold hover:text-brand-accent transition-colors">
                             İncele <i class="fas fa-arrow-right ml-2"></i>
                         </a>
                     </div>
@@ -312,52 +409,52 @@
         </div>
     </section>
 
-    <!-- İletişim Bölümü -->
-    <section id="contact" class="py-24 bg-brand-gray relative border-t border-gray-200">
+    <!-- İletişim Bölümü (Formspree) -->
+    <section id="contact" class="py-24 bg-brand-gray dark:bg-[#0b1120] relative border-t border-gray-200 dark:border-gray-800 transition-colors duration-500">
         <div class="container mx-auto px-6">
             <div class="text-center mb-16 reveal-element">
-                <h2 class="text-3xl md:text-5xl font-head font-bold mb-4 text-black">PROJENİ <span class="text-brand-accent">BAŞLAT</span></h2>
-                <p class="text-gray-500">Aşağıdaki formu doldurarak bana ulaşabilirsin.</p>
+                <h2 class="text-3xl md:text-5xl font-head font-bold mb-4 text-black dark:text-white">PROJENİ <span class="text-brand-accent">BAŞLAT</span></h2>
+                <p class="text-gray-500 dark:text-gray-400">Aşağıdaki formu doldurarak bana doğrudan e-posta gönderebilirsin.</p>
             </div>
 
             <div class="max-w-3xl mx-auto reveal-element">
-                <form id="contactForm" onsubmit="sendEmail(event)" class="space-y-6">
+                <!-- FORMSPREE FORMU -->
+                <!-- action kısmını kendi ID'nizle güncellemelisiniz -->
+                <form id="contactForm" action="https://formspree.io/f/FORM_ID_BURAYA" method="POST" class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <input type="text" id="senderName" placeholder="Adınız" class="w-full bg-white border border-gray-300 rounded-lg p-4 text-black focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 focus:outline-none transition-all placeholder-gray-400" required>
-                        <input type="email" id="senderEmail" placeholder="E-posta Adresiniz" class="w-full bg-white border border-gray-300 rounded-lg p-4 text-black focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 focus:outline-none transition-all placeholder-gray-400" required>
+                        <input type="text" name="name" placeholder="Adınız" class="w-full bg-white dark:bg-[#1e293b] border border-gray-300 dark:border-gray-700 rounded-lg p-4 text-black dark:text-white focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 focus:outline-none transition-all placeholder-gray-400" required>
+                        <input type="email" name="email" placeholder="E-posta Adresiniz" class="w-full bg-white dark:bg-[#1e293b] border border-gray-300 dark:border-gray-700 rounded-lg p-4 text-black dark:text-white focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 focus:outline-none transition-all placeholder-gray-400" required>
                     </div>
-                    <select id="subject" class="w-full bg-white border border-gray-300 rounded-lg p-4 text-black focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 focus:outline-none transition-all text-gray-500">
+                    <select name="subject" class="w-full bg-white dark:bg-[#1e293b] border border-gray-300 dark:border-gray-700 rounded-lg p-4 text-black dark:text-white focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 focus:outline-none transition-all text-gray-500 dark:text-gray-300">
                         <option>Proje Türü Seçiniz</option>
                         <option>Web Tasarım</option>
                         <option>Grafik Tasarım</option>
                         <option>Diğer</option>
                     </select>
-                    <textarea id="messageBody" rows="5" placeholder="Mesajınız..." class="w-full bg-white border border-gray-300 rounded-lg p-4 text-black focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 focus:outline-none transition-all placeholder-gray-400" required></textarea>
+                    <textarea name="message" rows="5" placeholder="Mesajınız..." class="w-full bg-white dark:bg-[#1e293b] border border-gray-300 dark:border-gray-700 rounded-lg p-4 text-black dark:text-white focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 focus:outline-none transition-all placeholder-gray-400" required></textarea>
                     
-                    <!-- Durum Mesajı Alanı -->
-                    <div id="statusMessage" class="hidden p-4 rounded-lg text-center text-sm font-bold"></div>
+                    <div id="formStatus" class="hidden p-4 rounded-lg text-center font-bold"></div>
 
-                    <button type="submit" id="submitBtn" class="w-full bg-brand-accent text-white font-head font-bold py-4 rounded-lg hover:bg-black hover:shadow-lg transition-all duration-300">
-                        GÖNDER
+                    <button type="submit" id="submitBtn" class="w-full bg-brand-accent text-white font-head font-bold py-4 rounded-lg hover:bg-black dark:hover:bg-white dark:hover:text-black hover:shadow-lg transition-all duration-300">
+                        GÖNDER <i class="fas fa-paper-plane ml-2"></i>
                     </button>
-                    <p class="text-xs text-gray-400 text-center mt-2">*Bu işlem cihazınızdaki varsayılan mail uygulamasını açar.</p>
                 </form>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="bg-white py-12 border-t border-gray-200 text-center">
+    <footer class="bg-white dark:bg-[#0f172a] py-12 border-t border-gray-200 dark:border-gray-800 text-center transition-colors duration-500">
         <div class="container mx-auto px-6">
-            <h2 class="text-3xl font-head font-bold text-black mb-2">VORLIXX</h2>
-            <p class="text-gray-500 text-sm mb-6">Digital Creator & Developer</p>
+            <h2 class="text-3xl font-head font-bold text-black dark:text-white mb-2">VORLIXX</h2>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mb-6">Digital Creator & Developer</p>
             
             <div class="flex justify-center space-x-6 mb-8">
                 <a href="#" class="text-gray-400 hover:text-brand-accent transition-colors text-xl"><i class="fab fa-linkedin-in"></i></a>
                 <a href="#" class="text-gray-400 hover:text-brand-accent transition-colors text-xl"><i class="fab fa-github"></i></a>
             </div>
             
-            <p class="text-gray-400 text-xs font-body tracking-wider">
+            <p class="text-gray-400 dark:text-gray-600 text-xs font-body tracking-wider">
                 &copy; 2026 VORLIXX. ALL RIGHTS RESERVED.
             </p>
         </div>
@@ -365,20 +462,62 @@
 
     <!-- JavaScript -->
     <script>
-        // Mouse Takip Efekti
+        // 1. Dark Mode Yönetimi
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const themeIcon = themeToggleBtn.querySelector('i');
+        const body = document.body;
+        const nav = document.querySelector('.nav-container');
+
+        // Navigasyon Renk Ayarı Fonksiyonu
+        function updateNavStyle(isDark) {
+            if (isDark) {
+                nav.classList.add('bg-[#0f172a]/90', 'border-gray-800', 'text-white');
+                nav.classList.remove('bg-white/90', 'border-gray-100', 'text-black');
+            } else {
+                nav.classList.add('bg-white/90', 'border-gray-100', 'text-black');
+                nav.classList.remove('bg-[#0f172a]/90', 'border-gray-800', 'text-white');
+            }
+        }
+
+        // Başlangıçta Kayıtlı Temayı Kontrol Et
+        if (localStorage.getItem('theme') === 'dark') {
+            body.classList.add('dark');
+            themeIcon.classList.remove('fa-moon');
+            themeIcon.classList.add('fa-sun');
+            updateNavStyle(true);
+        } else {
+            updateNavStyle(false);
+        }
+
+        // Butona Tıklanınca
+        themeToggleBtn.addEventListener('click', () => {
+            body.classList.toggle('dark');
+            
+            if (body.classList.contains('dark')) {
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+                localStorage.setItem('theme', 'dark');
+                updateNavStyle(true);
+            } else {
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+                localStorage.setItem('theme', 'light');
+                updateNavStyle(false);
+            }
+        });
+
+
+        // 2. Mouse Takip Efekti
         const cursorGlow = document.getElementById('cursor-glow');
-        
         document.addEventListener('mousemove', (e) => {
             cursorGlow.style.left = e.clientX + 'px';
             cursorGlow.style.top = e.clientY + 'px';
         });
 
-        // Scroll Animasyonu
-        document.addEventListener('DOMContentLoaded', () => {
-            const observerOptions = {
-                threshold: 0.1
-            };
 
+        // 3. Scroll Animasyonu
+        document.addEventListener('DOMContentLoaded', () => {
+            const observerOptions = { threshold: 0.1 };
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
@@ -386,54 +525,72 @@
                     }
                 });
             }, observerOptions);
-
             document.querySelectorAll('.reveal-element').forEach(el => observer.observe(el));
         });
 
-        // Email Fonksiyonu (Geliştirilmiş)
-        function sendEmail(e) {
-            e.preventDefault();
+
+        // 4. Formspree Form Gönderimi (AJAX)
+        const form = document.getElementById("contactForm");
+        
+        async function handleSubmit(event) {
+            event.preventDefault();
+            const status = document.getElementById("formStatus");
+            const btn = document.getElementById("submitBtn");
+            const originalBtnText = btn.innerHTML;
+
+            // Form ID Kontrolü (Kullanıcı ID girmiş mi?)
+            if(form.action.includes("https://formspree.io/f/xojevqdk")) {
+                alert("Lütfen kodun içindeki 'FORM_ID_BURAYA' kısmını kendi Formspree ID'niz ile değiştirin.");
+                return;
+            }
+
+            const data = new FormData(event.target);
             
-            const btn = document.getElementById('submitBtn');
-            const statusDiv = document.getElementById('statusMessage');
-            
-            // Form verilerini al
-            const name = document.getElementById('senderName').value;
-            const email = document.getElementById('senderEmail').value; // Mailto'da gönderen kısmına eklenemez ama mesaj içine ekleyebiliriz
-            const subject = document.getElementById('subject').value;
-            const message = document.getElementById('messageBody').value;
-            
-            // Mesaj gövdesini oluştur
-            const fullBody = `Gönderen: ${name} (${email})\n\nMesaj:\n${message}`;
-            
-            // Kullanıcıya geri bildirim ver
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'MAIL UYGULAMASI AÇILIYOR...';
-            btn.classList.add('opacity-75', 'cursor-not-allowed');
-            
-            // Mailto linkini oluştur
-            const mailtoLink = `mailto:elaymemmedli27@gmail.com?subject=${encodeURIComponent(subject + " - Portfolyo İletişim")}&body=${encodeURIComponent(fullBody)}`;
-            
-            // Kısa bir gecikmeyle işlemi yap (UX için)
-            setTimeout(() => {
-                window.location.href = mailtoLink;
-                
-                // Durum mesajını göster
-                statusDiv.classList.remove('hidden');
-                statusDiv.classList.add('bg-blue-50', 'text-blue-600');
-                statusDiv.innerHTML = 'Mail taslağı oluşturuldu. Lütfen açılan pencereden gönderi onaylayın.';
-                
+            // Yükleniyor durumu
+            btn.innerHTML = 'GÖNDERİLİYOR...';
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+
+            fetch(event.target.action, {
+                method: form.method,
+                body: data,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            }).then(response => {
+                if (response.ok) {
+                    status.innerHTML = "Mesajınız başarıyla gönderildi! Teşekkürler.";
+                    status.classList.remove('hidden', 'text-red-500', 'bg-red-100');
+                    status.classList.add('text-green-500', 'bg-green-100', 'dark:bg-green-900/30');
+                    form.reset();
+                } else {
+                    response.json().then(data => {
+                        if (Object.hasOwn(data, 'errors')) {
+                            status.innerHTML = data["errors"].map(error => error["message"]).join(", ");
+                        } else {
+                            status.innerHTML = "Bir hata oluştu, lütfen daha sonra tekrar deneyin.";
+                        }
+                        status.classList.remove('hidden', 'text-green-500', 'bg-green-100');
+                        status.classList.add('text-red-500', 'bg-red-100', 'dark:bg-red-900/30');
+                    })
+                }
+            }).catch(error => {
+                status.innerHTML = "Bir hata oluştu, form gönderilemedi.";
+                status.classList.remove('hidden', 'text-green-500', 'bg-green-100');
+                status.classList.add('text-red-500', 'bg-red-100', 'dark:bg-red-900/30');
+            }).finally(() => {
                 // Butonu eski haline getir
-                btn.innerHTML = 'TEKRAR GÖNDER';
-                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
                 
-                // 5 saniye sonra mesajı temizle
+                // 5 saniye sonra mesajı gizle
                 setTimeout(() => {
-                    statusDiv.classList.add('hidden');
-                    btn.innerHTML = originalText;
-                }, 8000);
-            }, 1000);
+                    status.classList.add('hidden');
+                }, 5000);
+            });
         }
+        form.addEventListener("submit", handleSubmit);
 
         // Smooth Scroll
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
